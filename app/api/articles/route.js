@@ -122,9 +122,25 @@ export async function POST(request) {
             userId = userResult.rows[0].id;
             console.log('✅ Found user by auth_uid:', userId);
           } else {
-            // auth_uidが見つからない場合、新しいユーザーを作成するか、デフォルトユーザーを使用
-            console.log('⚠️ User not found by auth_uid, using default user (id=1)');
-            userId = 1;
+            // auth_uidが見つからない場合、新しいユーザーを自動作成
+            console.log('🆕 Creating new user with auth_uid:', authorId);
+            
+            // リクエストボディから追加のユーザー情報を取得（存在する場合）
+            const username = body.username || `user_${authorId.substring(0, 8)}`;
+            const email = body.email || `${authorId}@temp.local`;
+            const displayName = body.displayName || username;
+            const avatarUrl = body.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${authorId}`;
+            
+            const newUserResult = await client.query(
+              `INSERT INTO users (auth_uid, username, email, display_name, avatar_url)
+               VALUES ($1, $2, $3, $4, $5)
+               ON CONFLICT (auth_uid) DO UPDATE SET updated_at = CURRENT_TIMESTAMP
+               RETURNING id`,
+              [authorId, username, email, displayName, avatarUrl]
+            );
+            
+            userId = newUserResult.rows[0].id;
+            console.log('✅ New user created with id:', userId);
           }
         } else {
           // INTEGERの場合：そのまま使用

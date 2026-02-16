@@ -63,6 +63,11 @@ export default function NewArticlePage() {
           thumbnailUrl: thumbnailUrl || null,
           slug,
           authorId: user.id,
+          // Supabase Authのユーザー情報も送信（自動ユーザー作成用）
+          username: user.user_metadata?.username || user.email?.split('@')[0] || `user_${user.id?.substring(0, 8)}`,
+          email: user.email,
+          displayName: user.user_metadata?.display_name || user.user_metadata?.full_name || user.email?.split('@')[0],
+          avatarUrl: user.user_metadata?.avatar_url || user.user_metadata?.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}`,
         }),
       });
 

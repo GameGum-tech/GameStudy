@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useAuth } from '../../../../contexts/AuthContext';
 import './edit.css';
 
 export default function EditArticlePage({ params }) {
   const resolvedParams = use(params);
+  const { user, loading: authLoading } = useAuth();
   const [article, setArticle] = useState(null);
   const [content, setContent] = useState('');
   const [title, setTitle] = useState('');
@@ -16,12 +18,21 @@ export default function EditArticlePage({ params }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isAuthor, setIsAuthor] = useState(false);
 
   const router = useRouter();
   const slug = resolvedParams.slug;
 
+  // 認証チェック
   useEffect(() => {
-    if (slug) {
+    if (!authLoading && !user) {
+      router.push(`/login?redirect=/articles/${slug}/edit`);
+    }
+  }, [user, authLoading, router, slug]);
+
+  // 記事データの取得と権限チェック
+  useEffect(() => {
+    if (slug && user) {
       fetch(`/api/articles/${slug}`)
         .then(res => {
           if (!res.ok) {
@@ -35,6 +46,16 @@ export default function EditArticlePage({ params }) {
           setTitle(articleData.title || '');
           setContent(articleData.content || '');
           setThumbnailUrl(articleData.thumbnail_url || '');
+          
+          // 作成者チェック
+          const userIsAuthor = articleData.author_id === user.id || 
+                               articleData.author_id === parseInt(user.id, 10);
+          setIsAuthor(userIsAuthor);
+          
+          if (!userIsAuthor) {
+            setError('この記事を編集する権限がありません。');
+          }
+          
           setLoading(false);
         })
         .catch(err => {
@@ -42,9 +63,14 @@ export default function EditArticlePage({ params }) {
           setLoading(false);
         });
     }
-  }, [slug]);
+  }, [slug, user]);
 
   const handleSave = async () => {
+    if (!isAuthor) {
+      setError('この記事を編集する権限がありません。');
+      return;
+    }
+
     setIsSaving(true);
     setError(null);
     try {
@@ -54,12 +80,16 @@ export default function EditArticlePage({ params }) {
         body: JSON.stringify({ 
           title, 
           content,
-          thumbnailUrl: thumbnailUrl 
+          thumbnailUrl: thumbnailUrl,
+          authorId: user.id  // 作成者IDを送信
         }),
       });
+      
       if (!res.ok) {
-        throw new Error('記事の更新に失敗しました。');
+        const data = await res.json();
+        throw new Error(data.error || '記事の更新に失敗しました。');
       }
+      
       const data = await res.json();
       const updatedArticle = data.article || data;
       router.push(`/articles/${updatedArticle.slug}`);
@@ -70,7 +100,7 @@ export default function EditArticlePage({ params }) {
     }
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="edit-loading">
         <p>読み込み中...</p>
@@ -78,10 +108,23 @@ export default function EditArticlePage({ params }) {
     );
   }
 
-  if (error && !article) {
+  if (!user) {
+    return null; // リダイレクト中
+  }
+
+  if (error && !isAuthor) {
     return (
       <div className="edit-error">
         <p>{error}</p>
+        <Link href={`/articles/${slug}`}>記事に戻る</Link>
+      </div>
+    );
+  }
+
+  if (!article) {
+    return (
+      <div className="edit-error">
+        <p>記事が見つかりません</p>
         <Link href="/">トップページに戻る</Link>
       </div>
     );
