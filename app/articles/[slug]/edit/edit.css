@@ -1,0 +1,374 @@
+/* 編集ページ専用スタイル */
+
+.edit-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #f8fafc;
+}
+
+/* ローディングとエラー */
+.edit-loading,
+.edit-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 100vh;
+  background-color: #f8fafc;
+  color: #475569;
+}
+
+.edit-error a {
+  color: #5271ff;
+  text-decoration: none;
+  padding: 8px 16px;
+  border: 1px solid #5271ff;
+  border-radius: 8px;
+}
+
+.edit-error a:hover {
+  background-color: #5271ff;
+  color: white;
+}
+
+/* ヘッダー */
+.edit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background-color: white;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.edit-header-left {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-right: 24px;
+}
+
+.demo-badge-inline {
+  background-color: #fef3c7;
+  color: #92400e;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.back-link {
+  color: #64748b;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+
+.back-link:hover {
+  color: #5271ff;
+}
+
+.title-input {
+  flex-grow: 1;
+  background: none;
+  border: none;
+  color: #1e293b;
+  font-size: 1.5rem;
+  font-weight: 600;
+  outline: none;
+  padding: 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.title-input:focus {
+  background-color: #f8fafc;
+}
+
+.title-input::placeholder {
+  color: #94a3b8;
+}
+
+.edit-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.save-button {
+  background-color: #5271ff;
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.save-button:hover:not(:disabled) {
+  background-color: #3b5bff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(82, 113, 255, 0.25);
+}
+
+.save-button:disabled {
+  background-color: #94a3b8;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* メタデータセクション */
+.edit-metadata {
+  padding: 12px 24px;
+  background-color: white;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.thumbnail-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.thumbnail-input:focus {
+  border-color: #5271ff;
+  box-shadow: 0 0 0 3px rgba(82, 113, 255, 0.1);
+}
+
+.thumbnail-input::placeholder {
+  color: #94a3b8;
+}
+
+/* エディタレイアウト */
+.editor-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  flex-grow: 1;
+  overflow: hidden;
+  gap: 0;
+}
+
+@media (max-width: 768px) {
+  .editor-layout {
+    grid-template-columns: 1fr;
+  }
+  .preview-pane {
+    display: none;
+  }
+}
+
+.editor-pane,
+.preview-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.editor-toolbar,
+.preview-toolbar {
+  padding: 12px 24px;
+  background-color: #1e293b;
+  color: #cbd5e1;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-bottom: 1px solid #334155;
+}
+
+.preview-toolbar {
+  background-color: white;
+  color: #475569;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.markdown-editor {
+  flex-grow: 1;
+  width: 100%;
+  border: none;
+  padding: 24px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  font-size: 15px;
+  line-height: 1.7;
+  resize: none;
+  outline: none;
+  background-color: #1e293b;
+  color: #e2e8f0;
+  overflow-y: auto;
+}
+
+.markdown-editor::placeholder {
+  color: #64748b;
+}
+
+.preview-pane {
+  background-color: #ffffff;
+  border-left: 1px solid #e2e8f0;
+}
+
+.markdown-preview {
+  flex-grow: 1;
+  padding: 32px 48px;
+  overflow-y: auto;
+  line-height: 1.8;
+  color: #1e293b;
+}
+
+/* Markdown Preview Styles */
+.markdown-preview h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 24px;
+  line-height: 1.3;
+  color: #0f172a;
+}
+
+.markdown-preview h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-top: 48px;
+  margin-bottom: 24px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e2e8f0;
+  color: #1e293b;
+}
+
+.markdown-preview h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 40px;
+  margin-bottom: 20px;
+  color: #334155;
+}
+
+.markdown-preview h4 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 32px;
+  margin-bottom: 16px;
+  color: #475569;
+}
+
+.markdown-preview p {
+  margin-bottom: 20px;
+  color: #475569;
+}
+
+.markdown-preview a {
+  color: #5271ff;
+  text-decoration: none;
+  transition: text-decoration 0.2s ease;
+}
+
+.markdown-preview a:hover {
+  text-decoration: underline;
+}
+
+.markdown-preview ul,
+.markdown-preview ol {
+  margin-bottom: 20px;
+  padding-left: 24px;
+  color: #475569;
+}
+
+.markdown-preview li {
+  margin-bottom: 8px;
+}
+
+.markdown-preview pre {
+  background-color: #0f172a;
+  color: #e2e8f0;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.markdown-preview code {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  background-color: #e2e8f0;
+  color: #dc3545;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.markdown-preview pre code {
+  background-color: transparent;
+  color: inherit;
+  padding: 0;
+  font-size: inherit;
+}
+
+.markdown-preview blockquote {
+  margin: 0 0 20px 0;
+  padding: 16px 24px;
+  background-color: #f1f5f9;
+  border-left: 4px solid #cbd5e1;
+  color: #64748b;
+}
+
+.markdown-preview blockquote p {
+  margin-bottom: 0;
+  color: inherit;
+}
+
+.markdown-preview img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 24px 0;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+}
+
+.markdown-preview table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.markdown-preview th,
+.markdown-preview td {
+  border: 1px solid #e2e8f0;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.markdown-preview th {
+  background-color: #f8fafc;
+  font-weight: 600;
+  color: #334155;
+}
+
+.markdown-preview td {
+  color: #475569;
+}
+
+.markdown-preview hr {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin: 32px 0;
+}

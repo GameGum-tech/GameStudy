@@ -1,88 +1,89 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import './edit.css';
+import { useAuth } from '../../../contexts/AuthContext';
+import '../../articles/[slug]/edit/edit.css';
 
-export default function EditArticlePage() {
-  const [article, setArticle] = useState(null);
+export default function NewArticlePage() {
+  const { user, loading, isDemoMode } = useAuth();
   const [content, setContent] = useState('');
   const [title, setTitle] = useState('');
   const [thumbnailUrl, setThumbnailUrl] = useState('');
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
-
-  const params = useParams();
   const router = useRouter();
-  const slug = params.slug;
+  const { isSupabaseEnabled } = useAuth();
 
   useEffect(() => {
-    if (slug) {
-      fetch(`/api/articles/${slug}`)
-        .then(res => {
-          if (!res.ok) {
-            throw new Error('記事の読み込みに失敗しました。');
-          }
-          return res.json();
-        })
-        .then(data => {
-          const articleData = data.article || data;
-          setArticle(articleData);
-          setTitle(articleData.title || '');
-          setContent(articleData.content || '');
-          setThumbnailUrl(articleData.thumbnail_url || '');
-          setLoading(false);
-        })
-        .catch(err => {
-          setError(err.message);
-          setLoading(false);
-        });
+    // Supabaseが未設定の場合はトップページにリダイレクト
+    if (!isSupabaseEnabled && !isDemoMode) {
+      setError('認証機能が有効になっていません。Supabaseの設定を完了してください。');
+      setTimeout(() => router.push('/'), 3000);
+      return;
     }
-  }, [slug]);
+    
+    if (!loading && !user) {
+      router.push('/login?redirect=/articles/new');
+    }
+  }, [user, loading, router, isSupabaseEnabled, isDemoMode]);
 
   const handleSave = async () => {
+    if (!title.trim()) {
+      setError('タイトルを入力してください');
+      return;
+    }
+
+    if (!content.trim()) {
+      setError('本文を入力してください');
+      return;
+    }
+
     setIsSaving(true);
     setError(null);
+
     try {
-      const res = await fetch(`/api/articles/${slug}`, {
-        method: 'PUT',
+      // スラッグを生成（タイトルから）
+      const slug = title
+        .toLowerCase()
+        .replace(/[^a-z0-9一-龯ひらがなカタカナ]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .substring(0, 100) + '-' + Date.now();
+
+      const res = await fetch('/api/articles', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          title, 
+        body: JSON.stringify({
+          title,
           content,
-          thumbnailUrl: thumbnailUrl 
+          excerpt: content.substring(0, 200),
+          thumbnailUrl: thumbnailUrl || null,
+          slug,
+          authorId: user.id,
         }),
       });
+
       if (!res.ok) {
-        throw new Error('記事の更新に失敗しました。');
+        const data = await res.json();
+        throw new Error(data.error || '記事の作成に失敗しました');
       }
+
       const data = await res.json();
-      const updatedArticle = data.article || data;
-      router.push(`/articles/${updatedArticle.slug}`);
+      const createdArticle = data.article || data;
+      router.push(`/articles/${createdArticle.slug}`);
     } catch (err) {
       setError(err.message);
-    } finally {
       setIsSaving(false);
     }
   };
 
-  if (loading) {
+  if (loading || !user) {
     return (
       <div className="edit-loading">
         <p>読み込み中...</p>
-      </div>
-    );
-  }
-
-  if (error && !article) {
-    return (
-      <div className="edit-error">
-        <p>{error}</p>
-        <Link href="/">トップページに戻る</Link>
       </div>
     );
   }
@@ -91,8 +92,11 @@ export default function EditArticlePage() {
     <div className="edit-page">
       <header className="edit-header">
         <div className="edit-header-left">
-          <Link href={`/articles/${slug}`} className="back-link">
-            ← 記事に戻る
+          {isDemoMode && (
+            <span className="demo-badge-inline">🎭 デモ</span>
+          )}
+          <Link href="/mypage" className="back-link">
+            ← マイページに戻る
           </Link>
           <input 
             type="text"
@@ -109,7 +113,7 @@ export default function EditArticlePage() {
             className="save-button"
             disabled={isSaving}
           >
-            {isSaving ? '保存中...' : '更新する'}
+            {isSaving ? '公開中...' : '公開する'}
           </button>
         </div>
       </header>
@@ -133,7 +137,25 @@ export default function EditArticlePage() {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             className="markdown-editor"
-            placeholder="マークダウンで記事を記述..."
+            placeholder="マークダウンで記事を記述...
+
+# 見出し1
+## 見出し2
+### 見出し3
+
+段落のテキスト
+
+- リスト項目1
+- リスト項目2
+
+```
+コードブロック
+```
+
+> 引用
+
+[リンク](https://example.com)
+"
           />
         </div>
         <div className="preview-pane">
