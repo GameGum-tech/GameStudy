@@ -96,13 +96,16 @@ Vercelダッシュボードで **Settings** → **Environment Variables** に移
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
 
-# データベース接続（Supabase Postgresを使用する場合）
-DATABASE_URL=postgresql://postgres:[PASSWORD]@db.your-project.supabase.co:5432/postgres
+# データベース接続（Supabase PostgreSQL - Connection pooling推奨）
+DATABASE_URL=postgresql://postgres.your-project:[PASSWORD]@aws-0-[region].pooler.supabase.com:6543/postgres
 ```
 
 **⚠️ 重要**: 
-- 本番環境では`DATABASE_URL`にSupabase PostgreSQLの接続文字列を使用してください
-- Supabaseダッシュボード → **Settings** → **Database** → **Connection string** → **URI**
+- 本番環境では`DATABASE_URL`にSupabase PostgreSQL **Connection pooling** の接続文字列を使用してください
+- Supabaseダッシュボード → **Settings** → **Database** → **Connection string** → **Connection pooling** → **Session mode**
+- ❌ 直接接続（`db.xxx.supabase.co:5432`）は使用しないでください（Vercelで接続エラーが発生します）
+- ✅ Connection pooling（`aws-0-xxx.pooler.supabase.com:6543`）を使用してください
+- パスワードを忘れた場合: Supabase Dashboard → **Settings** → **Database** → **Reset Database Password**
 
 ### ステップ3: デプロイ
 

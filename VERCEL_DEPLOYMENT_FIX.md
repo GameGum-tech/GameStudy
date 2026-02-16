@@ -61,15 +61,27 @@ DATABASE_URL=postgresql://postgres:[YOUR_PASSWORD]@db.rdhibzwnkfgrvlvjgpwm.supab
 
 #### DATABASE_URLの取得方法:
 
-1. Supabase Dashboard → プロジェクト選択
+**重要**: Supabaseの正しい接続文字列を使用してください。
+
+1. Supabase Dashboard → プロジェクト選択（rdhibzwnkfgrvlvjgpwm）
 2. **Settings** → **Database** をクリック
 3. **Connection string** タブを選択
-4. **URI** を選択（Transaction modeではなく）
-5. 表示された文字列をコピー
+4. **Connection pooling** を選択（推奨）
+5. **Session mode** のURIをコピー
    ```
-   postgresql://postgres:[YOUR-PASSWORD]@db.rdhibzwnkfgrvlvjgpwm.supabase.co:5432/postgres
+   postgresql://postgres.rdhibzwnkfgrvlvjgpwm:[YOUR-PASSWORD]@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres
    ```
-6. `[YOUR-PASSWORD]` をプロジェクト作成時に設定した実際のパスワードに置き換え
+6. `[YOUR-PASSWORD]` をプロジェクト作成時に設定した実際のデータベースパスワードに置き換え
+
+**注意**: 
+- ❌ `db.rdhibzwnkfgrvlvjgpwm.supabase.co` (直接接続) は使用しないでください
+- ✅ `aws-0-[region].pooler.supabase.com` (接続プーリング) を使用してください
+- ポート番号は **6543** (Session mode) または **5432** (Transaction mode)
+
+**パスワードを忘れた場合**:
+1. Supabase Dashboard → **Settings** → **Database**
+2. **Database Password** セクション → **Reset Database Password**
+3. 新しいパスワードを設定し、DATABASE_URLを更新
 
 #### Vercel環境変数の追加:
 
