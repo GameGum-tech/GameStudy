@@ -7,7 +7,7 @@ export default function Footer() {
         <div className="container">
           <h2>Join GameStudy</h2>
           <p>あなたの知見やアイデアを共有しよう</p>
-          <Link href="#" className="join-button">今すぐはじめる</Link>
+          <Link href="/articles/new" className="join-button">今すぐはじめる</Link>
         </div>
       </div>
       <footer className="main-footer">

@@ -13,34 +13,36 @@ export function useTheme() {
 }
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState(() => {
+    // サーバーサイドではlightを返す
+    if (typeof window === 'undefined') return 'light';
+    
+    // クライアントサイドでは即座にテーマを読み込む
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      return savedTheme;
+    }
+    
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return prefersDark ? 'dark' : 'light';
+  });
+  
   const [mounted, setMounted] = useState(false);
 
   // クライアントサイドでのみ実行
   useEffect(() => {
     setMounted(true);
-    
-    // localStorageからテーマを読み込み
-    const savedTheme = localStorage.getItem('theme');
-    
-    if (savedTheme) {
-      setTheme(savedTheme);
-      document.documentElement.setAttribute('data-theme', savedTheme);
-    } else {
-      // システムの設定を検出
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const initialTheme = prefersDark ? 'dark' : 'light';
-      setTheme(initialTheme);
-      document.documentElement.setAttribute('data-theme', initialTheme);
-    }
   }, []);
 
   // システムのカラースキーム変更を監視
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     
     const handleChange = (e) => {
       const savedTheme = localStorage.getItem('theme');
+      // ユーザーが手動で設定していない場合のみ、システム設定に従う
       if (!savedTheme) {
         const newTheme = e.matches ? 'dark' : 'light';
         setTheme(newTheme);
@@ -66,13 +68,8 @@ export function ThemeProvider({ children }) {
     document.documentElement.setAttribute('data-theme', mode);
   };
 
-  // マウント前はnullを返す(ハイドレーションエラー防止)
-  if (!mounted) {
-    return null;
-  }
-
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, setThemeMode }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, setThemeMode, mounted }}>
       {children}
     </ThemeContext.Provider>
   );

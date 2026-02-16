@@ -311,46 +311,41 @@ export default function EnhancedArticleDetailPage({ params }) {
 
       <main className="article-main-content">
         <div className="article-header">
-          <div className="thumbnail-container">
+          <div className={`thumbnail-container ${article.thumbnail_url ? 'thumbnail-container-with-image' : ''}`}>
             {article.thumbnail_url ? (
               <Image
                 src={article.thumbnail_url}
                 alt={article.title}
-                width={80}
-                height={80}
+                fill
+                priority
                 className="article-thumbnail"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+                style={{ objectFit: 'cover' }}
               />
             ) : (
               <div className="default-thumbnail">📄</div>
             )}
           </div>
-          <h1>{article.title}</h1>
-          {article.status === 'draft' && (
-            <div style={{
-              display: 'inline-block',
-              backgroundColor: '#fef3c7',
-              color: '#92400e',
-              padding: '6px 16px',
-              borderRadius: '12px',
-              fontSize: '0.9rem',
-              fontWeight: '600',
-              marginBottom: '16px'
-            }}>
-              📝 下書き（作成者のみ表示中）
+          <div className="article-header-content">
+            <h1>{article.title}</h1>
+            {article.status === 'draft' && (
+              <div className="article-draft-badge">
+                📝 下書き（作成者のみ表示中）
+              </div>
+            )}
+            <div className="article-meta-top">
+              <div className="author-info-top">
+                <Image
+                  src={article.avatar_url || '/default-avatar.png'}
+                  alt={article.display_name}
+                  width={24}
+                  height={24}
+                  className="author-avatar-small"
+                />
+                <span>{article.display_name}</span>
+              </div>
+              <span className="publish-date">公開日: {formatDate(article.created_at)}</span>
             </div>
-          )}
-          <div className="article-meta-top">
-            <div className="author-info-top">
-              <Image
-                src={article.avatar_url || '/default-avatar.png'}
-                alt={article.display_name}
-                width={24}
-                height={24}
-                className="author-avatar-small"
-              />
-              <span>{article.display_name}</span>
-            </div>
-            <span className="publish-date">公開日: {formatDate(article.created_at)}</span>
           </div>
         </div>
 

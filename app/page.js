@@ -72,12 +72,17 @@ export default function ArticleListPage() {
                 <article key={article.id} className="article-card-note">
                   <Link href={`/articles/${article.slug}`}>
                     <div className="card-thumbnail">
-                      <Image
-                        src={article.thumbnail_url || '/default-thumbnail.png'}
-                        alt={article.title}
-                        layout="fill"
-                        objectFit="cover"
-                      />
+                      {article.thumbnail_url ? (
+                        <Image
+                          src={article.thumbnail_url}
+                          alt={article.title}
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          style={{ objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <div className="default-card-thumbnail">📄</div>
+                      )}
                     </div>
                     <div className="card-content">
                       <h3>{article.title}</h3>
