@@ -7,6 +7,7 @@
 -- ユーザーテーブルの作成
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
+    auth_uid UUID UNIQUE,  -- Supabase AuthのユーザーIDを保存
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     display_name VARCHAR(100) NOT NULL,
@@ -66,6 +67,7 @@ CREATE TABLE IF NOT EXISTS bookmarks (
 );
 
 -- インデックスの作成（パフォーマンス向上）
+CREATE INDEX IF NOT EXISTS idx_users_auth_uid ON users(auth_uid);
 CREATE INDEX IF NOT EXISTS idx_articles_author_id ON articles(author_id);
 CREATE INDEX IF NOT EXISTS idx_articles_slug ON articles(slug);
 CREATE INDEX IF NOT EXISTS idx_articles_published ON articles(published);

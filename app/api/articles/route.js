@@ -103,8 +103,39 @@ export async function POST(request) {
     console.log('✅ Database connection successful');
 
     try {
-      // デフォルトのユーザーID（認証実装後は実際のユーザーIDを使用）
-      const userId = authorId || 1;
+      // authorIdの処理：UUIDの場合はauth_uidで検索、INTEGERの場合はそのまま使用
+      let userId;
+      
+      if (authorId) {
+        // UUIDの形式かチェック（UUID v4形式: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx）
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        
+        if (uuidRegex.test(authorId)) {
+          // UUIDの場合：auth_uidで検索
+          console.log('🔍 Searching user by auth_uid (UUID):', authorId);
+          const userResult = await client.query(
+            'SELECT id FROM users WHERE auth_uid = $1',
+            [authorId]
+          );
+          
+          if (userResult.rows.length > 0) {
+            userId = userResult.rows[0].id;
+            console.log('✅ Found user by auth_uid:', userId);
+          } else {
+            // auth_uidが見つからない場合、新しいユーザーを作成するか、デフォルトユーザーを使用
+            console.log('⚠️ User not found by auth_uid, using default user (id=1)');
+            userId = 1;
+          }
+        } else {
+          // INTEGERの場合：そのまま使用
+          userId = parseInt(authorId, 10);
+          console.log('📊 Using provided user ID (INTEGER):', userId);
+        }
+      } else {
+        // authorIdが未指定の場合：デフォルトユーザー
+        userId = 1;
+        console.log('📊 No authorId provided, using default user (id=1)');
+      }
 
       // ユーザーが存在するか確認
       const userCheck = await client.query(

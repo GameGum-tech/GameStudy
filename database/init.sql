@@ -1,6 +1,7 @@
 -- ユーザーテーブルの作成
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
+    auth_uid UUID UNIQUE,  -- Supabase AuthのユーザーIDを保存
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     display_name VARCHAR(100) NOT NULL,
