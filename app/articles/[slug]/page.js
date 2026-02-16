@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { useAuth } from "../../../contexts/AuthContext";
 
 // 目次コンポーネント
 function TableOfContents({ content }) {
@@ -80,29 +81,149 @@ function CustomMarkdownRenderer({ content }) {
 export default function EnhancedArticleDetailPage({ params }) {
   const resolvedParams = use(params);
   const router = useRouter();
+  const { user } = useAuth();
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
+  const [isAuthor, setIsAuthor] = useState(false);
+  const [userRegistered, setUserRegistered] = useState(false);
+
+  // ユーザーをデータベースに登録
+  useEffect(() => {
+    const ensureUserInDatabase = async () => {
+      if (!user) {
+        setUserRegistered(true);
+        return;
+      }
+      
+      try {
+        console.log('🔄 記事詳細ページ: ユーザー登録を確認中...', user.id);
+        
+        const userData = {
+          auth_uid: user.id,
+          email: user.email,
+          username: user.user_metadata?.username || user.user_metadata?.full_name || user.email?.split('@')[0],
+          display_name: user.user_metadata?.full_name || user.user_metadata?.display_name || user.email?.split('@')[0],
+          avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture,
+        };
+
+        const response = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(userData),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          console.log('✅ ユーザー登録確認完了:', result);
+          setUserRegistered(true);
+        } else {
+          console.error('❌ ユーザー登録失敗');
+          setUserRegistered(true); // エラーでも続行
+        }
+      } catch (error) {
+        console.error('❌ ユーザー登録エラー:', error);
+        setUserRegistered(true); // エラーでも続行
+      }
+    };
+
+    ensureUserInDatabase();
+  }, [user]);
 
   useEffect(() => {
     fetchArticle();
   }, [resolvedParams.slug]);
 
+  useEffect(() => {
+    if (user && article && userRegistered) {
+      checkIfAuthor(article);
+    }
+  }, [user, article, userRegistered]);
+
+  const checkIfAuthor = async (articleData) => {
+    if (!user) {
+      setIsAuthor(false);
+      
+      // 下書き記事でログインしていない場合はエラー
+      if (articleData.status === 'draft') {
+        setError('この記事は下書きです。作成者のみが閲覧できます。');
+      }
+      return;
+    }
+
+    try {
+      // ユーザーの記事一覧を取得して、現在の記事が含まれているか確認
+      const res = await fetch(`/api/users/${user.id}/articles`);
+      if (!res.ok) {
+        setIsAuthor(false);
+        
+        // 下書き記事の場合はエラー
+        if (articleData.status === 'draft') {
+          setError('この記事は下書きです。作成者のみが閲覧できます。');
+        }
+        return;
+      }
+
+      const data = await res.json();
+      const userArticles = data.articles || [];
+      
+      // 現在の記事がユーザーの記事リストに含まれているか確認
+      const isUserArticle = userArticles.some(
+        a => a.id === articleData.id || a.slug === articleData.slug
+      );
+      
+      setIsAuthor(isUserArticle);
+      console.log('Author check:', { userId: user.id, articleId: articleData.id, isAuthor: isUserArticle });
+      
+      // 下書き記事で作成者でない場合はエラー
+      if (articleData.status === 'draft' && !isUserArticle) {
+        setError('この記事は下書きです。作成者のみが閲覧できます。');
+      }
+    } catch (error) {
+      console.error('Author check error:', error);
+      setIsAuthor(false);
+      
+      // 下書き記事の場合はエラー
+      if (articleData.status === 'draft') {
+        setError('この記事は下書きです。作成者のみが閲覧できます。');
+      }
+    }
+  };
+
   const fetchArticle = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/articles/${resolvedParams.slug}`);
-      const data = await res.json();
+      
+      // まず公開記事を取得
+      let res = await fetch(`/api/articles/${resolvedParams.slug}`);
+      let data = await res.json();
+
+      // 404の場合、ログインユーザーであれば下書きも含めて再取得
+      if (!res.ok && res.status === 404 && user) {
+        console.log('🔍 記事が見つからないため、下書きも含めて再検索します');
+        res = await fetch(`/api/articles/${resolvedParams.slug}?includeDrafts=true`);
+        data = await res.json();
+      }
 
       if (!res.ok) {
         throw new Error(data.error || "記事の取得に失敗しました");
       }
 
-      setArticle(data.article);
-      setLikesCount(data.article.likes_count);
+      const articleData = data.article;
+      
+      // 下書き記事の場合、作成者確認が完了するまで表示を保留
+      if (articleData.status === 'draft') {
+        console.log('📝 下書き記事が見つかりました。作成者確認が必要です。');
+        // 一旦記事をセットして、後で作成者チェックで判定
+        setArticle(articleData);
+        setLikesCount(articleData.likes_count);
+      } else {
+        setArticle(articleData);
+        setLikesCount(articleData.likes_count);
+      }
     } catch (error) {
       setError(error.message);
     } finally {
@@ -204,6 +325,20 @@ export default function EnhancedArticleDetailPage({ params }) {
             )}
           </div>
           <h1>{article.title}</h1>
+          {article.status === 'draft' && (
+            <div style={{
+              display: 'inline-block',
+              backgroundColor: '#fef3c7',
+              color: '#92400e',
+              padding: '6px 16px',
+              borderRadius: '12px',
+              fontSize: '0.9rem',
+              fontWeight: '600',
+              marginBottom: '16px'
+            }}>
+              📝 下書き（作成者のみ表示中）
+            </div>
+          )}
           <div className="article-meta-top">
             <div className="author-info-top">
               <Image
@@ -233,12 +368,14 @@ export default function EnhancedArticleDetailPage({ params }) {
               </Link>
             ))}
           </div>
-          <button
-            onClick={() => router.push(`/articles/${article.slug}/edit`)}
-            className="edit-button"
-          >
-            記事を編集
-          </button>
+          {isAuthor && (
+            <button
+              onClick={() => router.push(`/articles/${article.slug}/edit`)}
+              className="edit-button"
+            >
+              記事を編集
+            </button>
+          )}
         </div>
       </main>
 

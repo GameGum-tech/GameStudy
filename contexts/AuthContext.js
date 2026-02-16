@@ -30,6 +30,36 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [isDemoMode, setIsDemoMode] = useState(false);
 
+  // ユーザーがデータベースに存在することを確認し、存在しない場合は作成
+  const ensureUserInDatabase = async (supabaseUser) => {
+    try {
+      const userData = {
+        auth_uid: supabaseUser.id,
+        email: supabaseUser.email,
+        username: supabaseUser.user_metadata?.username || supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0],
+        display_name: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.display_name || supabaseUser.email?.split('@')[0],
+        avatar_url: supabaseUser.user_metadata?.avatar_url || supabaseUser.user_metadata?.picture,
+      };
+
+      console.log('🔄 Ensuring user in database:', userData);
+
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ User ensured in database:', result);
+      } else {
+        console.error('❌ Failed to ensure user in database:', await response.text());
+      }
+    } catch (error) {
+      console.error('❌ Error ensuring user in database:', error);
+    }
+  };
+
   useEffect(() => {
     // Supabaseが有効な場合のみ認証処理を実行
     if (!isSupabaseEnabled()) {
@@ -44,8 +74,14 @@ export function AuthProvider({ children }) {
     }
 
     // 現在のセッションを確認
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null);
+      
+      // 既存セッションがある場合、ユーザーがDBに存在することを確認
+      if (session?.user) {
+        await ensureUserInDatabase(session.user);
+      }
+      
       setLoading(false);
     }).catch((error) => {
       console.warn('Supabase認証エラー:', error);
@@ -55,8 +91,14 @@ export function AuthProvider({ children }) {
     // 認証状態の変更を監視
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔐 Auth state changed:', event, session?.user?.id);
       setUser(session?.user ?? null);
+      
+      // ログイン時に常にデータベースのユーザーを確認
+      if (session?.user) {
+        await ensureUserInDatabase(session.user);
+      }
     });
 
     return () => subscription.unsubscribe();

@@ -8,11 +8,20 @@ export async function GET(request, { params }) {
   const client = await pool.connect();
 
   try {
-    // ビュー数を増加
-    await client.query(
-      "UPDATE articles SET views_count = views_count + 1 WHERE slug = $1",
-      [resolvedParams.slug]
-    );
+    // クエリパラメータで下書きも含めるかどうかを判定
+    const { searchParams } = new URL(request.url);
+    const includeDrafts = searchParams.get('includeDrafts') === 'true';
+
+    // ビュー数を増加（公開済み記事のみ）
+    if (!includeDrafts) {
+      await client.query(
+        "UPDATE articles SET views_count = views_count + 1 WHERE slug = $1 AND published = true",
+        [resolvedParams.slug]
+      );
+    }
+
+    // 下書きも含める場合はpublishedチェックを外す
+    const publishedFilter = includeDrafts ? '' : 'AND a.published = true';
 
     const result = await client.query(`
       SELECT 
@@ -25,7 +34,7 @@ export async function GET(request, { params }) {
       LEFT JOIN users u ON a.author_id = u.id
       LEFT JOIN article_tags at ON a.id = at.article_id
       LEFT JOIN tags t ON at.tag_id = t.id
-      WHERE a.slug = $1 AND a.published = true
+      WHERE a.slug = $1 ${publishedFilter}
       GROUP BY a.id, u.username, u.display_name, u.avatar_url, u.bio
     `, [resolvedParams.slug]);
 
@@ -52,11 +61,12 @@ export async function PUT(request, { params }) {
 
   try {
     const body = await request.json();
-    const { title, content, excerpt, thumbnailUrl, authorId } = body;
+    const { title, content, excerpt, thumbnailUrl, authorId, status } = body;
 
     console.log('Request body:', { 
       title: title?.substring(0, 50),
-      authorId 
+      authorId,
+      status
     });
 
     if (!title || !content) {
@@ -106,13 +116,28 @@ export async function PUT(request, { params }) {
       }
 
       // 記事を更新
-      const result = await client.query(
-        `UPDATE articles 
+      const articleStatus = status === 'draft' ? 'draft' : (status === 'published' ? 'published' : undefined);
+      
+      let updateQuery, updateParams;
+      
+      if (articleStatus !== undefined) {
+        // statusが指定されている場合
+        updateQuery = `UPDATE articles 
+         SET title = $1, content = $2, excerpt = $3, thumbnail_url = $4, status = $5, published = $6, updated_at = CURRENT_TIMESTAMP
+         WHERE slug = $7
+         RETURNING *`;
+        updateParams = [title, content, excerpt, thumbnailUrl, articleStatus, articleStatus === 'published', resolvedParams.slug];
+        console.log('📝 Updating article with status:', articleStatus);
+      } else {
+        // statusが指定されていない場合（既存の動作を維持）
+        updateQuery = `UPDATE articles 
          SET title = $1, content = $2, excerpt = $3, thumbnail_url = $4, updated_at = CURRENT_TIMESTAMP
          WHERE slug = $5
-         RETURNING *`,
-        [title, content, excerpt, thumbnailUrl, resolvedParams.slug]
-      );
+         RETURNING *`;
+        updateParams = [title, content, excerpt, thumbnailUrl, resolvedParams.slug];
+      }
+      
+      const result = await client.query(updateQuery, updateParams);
 
       console.log('✅ Article updated successfully');
       return Response.json({ article: result.rows[0] });

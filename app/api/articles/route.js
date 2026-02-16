@@ -19,7 +19,7 @@ export async function GET() {
       const result = await client.query(`
         SELECT 
           a.id, a.title, a.slug, a.excerpt, a.thumbnail_url, 
-          a.likes_count, a.views_count, a.created_at, a.updated_at,
+          a.likes_count, a.views_count, a.created_at, a.updated_at, a.status,
           u.username, u.display_name, u.avatar_url,
           ARRAY_AGG(
             json_build_object('id', t.id, 'name', t.name, 'color', t.color)
@@ -28,7 +28,7 @@ export async function GET() {
         LEFT JOIN users u ON a.author_id = u.id
         LEFT JOIN article_tags at ON a.id = at.article_id
         LEFT JOIN tags t ON at.tag_id = t.id
-        WHERE a.published = true
+        WHERE a.published = true AND (a.status = 'published' OR a.status IS NULL)
         GROUP BY a.id, u.username, u.display_name, u.avatar_url
         ORDER BY a.updated_at DESC
       `);
@@ -85,10 +85,11 @@ export async function POST(request) {
     console.log('Request body:', { 
       title: body.title?.substring(0, 50),
       slug: body.slug,
-      authorId: body.authorId 
+      authorId: body.authorId,
+      status: body.status
     });
 
-    const { title, content, excerpt, thumbnailUrl, slug, authorId } = body;
+    const { title, content, excerpt, thumbnailUrl, slug, authorId, status } = body;
 
     if (!title || !content || !slug) {
       console.error('❌ Validation error: missing required fields');
@@ -122,25 +123,16 @@ export async function POST(request) {
             userId = userResult.rows[0].id;
             console.log('✅ Found user by auth_uid:', userId);
           } else {
-            // auth_uidが見つからない場合、新しいユーザーを自動作成
-            console.log('🆕 Creating new user with auth_uid:', authorId);
-            
-            // リクエストボディから追加のユーザー情報を取得（存在する場合）
-            const username = body.username || `user_${authorId.substring(0, 8)}`;
-            const email = body.email || `${authorId}@temp.local`;
-            const displayName = body.displayName || username;
-            const avatarUrl = body.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${authorId}`;
-            
-            const newUserResult = await client.query(
-              `INSERT INTO users (auth_uid, username, email, display_name, avatar_url)
-               VALUES ($1, $2, $3, $4, $5)
-               ON CONFLICT (auth_uid) DO UPDATE SET updated_at = CURRENT_TIMESTAMP
-               RETURNING id`,
-              [authorId, username, email, displayName, avatarUrl]
+            // auth_uidが見つからない場合はエラー
+            console.error('❌ User not found with auth_uid:', authorId);
+            return Response.json(
+              { 
+                error: "ユーザー情報が登録されていません。ページをリロードしてから再度お試しください。",
+                code: "USER_NOT_FOUND",
+                details: "Supabase Authでログインしていますが、アプリケーションのusersテーブルに登録されていません。"
+              },
+              { status: 404 }
             );
-            
-            userId = newUserResult.rows[0].id;
-            console.log('✅ New user created with id:', userId);
           }
         } else {
           // INTEGERの場合：そのまま使用
@@ -168,14 +160,26 @@ export async function POST(request) {
       }
 
       console.log('📊 Inserting article...');
+      // statusのデフォルト値は'published'、指定されていれば使用（draft or published）
+      const articleStatus = status === 'draft' ? 'draft' : 'published';
+      
       const result = await client.query(
-        `INSERT INTO articles (title, content, excerpt, thumbnail_url, slug, author_id, published)
-         VALUES ($1, $2, $3, $4, $5, $6, true)
+        `INSERT INTO articles (title, content, excerpt, thumbnail_url, slug, author_id, published, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING *`,
-        [title, content, excerpt || content.substring(0, 200), thumbnailUrl, slug, userId]
+        [
+          title, 
+          content, 
+          excerpt || content.substring(0, 200), 
+          thumbnailUrl, 
+          slug, 
+          userId,
+          articleStatus === 'published', // publishedフラグ（後方互換性のため）
+          articleStatus
+        ]
       );
 
-      console.log('✅ Article created successfully:', result.rows[0].id);
+      console.log('✅ Article created successfully:', result.rows[0].id, 'status:', articleStatus);
       return Response.json({ article: result.rows[0] }, { status: 201 });
     } catch (error) {
       console.error("❌ 記事作成エラー:", error);

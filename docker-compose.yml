@@ -3,17 +3,9 @@ services:
     build: .
     ports:
       - "3000:3000"
-    environment:
-      - PGHOST=db
-      - PGPORT=5432
-      - PGUSER=postgres
-      - PGPASSWORD=postgres
-      - PGDATABASE=gamestudy
     volumes:
       - .:/app
       - /app/node_modules
-    depends_on:
-      - db
 
   db:
     image: postgres:16-alpine

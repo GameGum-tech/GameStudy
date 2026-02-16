@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '../../contexts/AuthContext';
@@ -12,8 +12,62 @@ export default function MyPage() {
   const [articles, setArticles] = useState([]);
   const [fetchLoading, setFetchLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [userRegistered, setUserRegistered] = useState(false);
+  const [activeTab, setActiveTab] = useState('published'); // 'published' or 'drafts'
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isSupabaseEnabled } = useAuth();
+
+  // URLパラメータからタブを取得
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'drafts') {
+      setActiveTab('drafts');
+    }
+  }, [searchParams]);
+
+  // ユーザーをデータベースに登録
+  useEffect(() => {
+    const ensureUserInDatabase = async () => {
+      if (!user || isDemoMode) {
+        setUserRegistered(true);
+        return;
+      }
+      
+      try {
+        console.log('🔄 マイページ: ユーザー登録を確認中...', user.id);
+        
+        const userData = {
+          auth_uid: user.id,
+          email: user.email,
+          username: user.user_metadata?.username || user.user_metadata?.full_name || user.email?.split('@')[0],
+          display_name: user.user_metadata?.full_name || user.user_metadata?.display_name || user.email?.split('@')[0],
+          avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture,
+        };
+
+        const response = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(userData),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          console.log('✅ ユーザー登録確認完了:', result);
+          setUserRegistered(true);
+        } else {
+          const errorData = await response.json();
+          console.error('❌ ユーザー登録失敗:', errorData);
+        }
+      } catch (error) {
+        console.error('❌ ユーザー登録エラー:', error);
+      }
+    };
+
+    if (user) {
+      ensureUserInDatabase();
+    }
+  }, [user, isDemoMode]);
 
   useEffect(() => {
     // Supabaseが未設定の場合はトップページにリダイレクト
@@ -30,20 +84,22 @@ export default function MyPage() {
   }, [user, loading, router, isSupabaseEnabled, isDemoMode]);
 
   useEffect(() => {
-    if (user) {
+    if (user && userRegistered) {
       fetchMyArticles();
     }
-  }, [user]);
+  }, [user, userRegistered]);
 
   const fetchMyArticles = async () => {
     try {
-      // TODO: ユーザーの記事を取得するAPIエンドポイントを作成
-      // 現在は全記事を取得して表示（実装例）
-      const res = await fetch('/api/articles');
+      console.log('Fetching articles for user:', user.id);
+      // ユーザーIDで記事を取得
+      const res = await fetch(`/api/users/${user.id}/articles`);
       if (!res.ok) throw new Error('記事の取得に失敗しました');
       const data = await res.json();
+      console.log('Fetched articles:', data.articles?.length);
       setArticles(data.articles || []);
     } catch (err) {
+      console.error('記事取得エラー:', err);
       setError(err.message);
     } finally {
       setFetchLoading(false);
@@ -123,6 +179,22 @@ export default function MyPage() {
             </Link>
           </div>
 
+          {/* タブナビゲーション */}
+          <div className="tabs">
+            <button 
+              className={`tab ${activeTab === 'published' ? 'active' : ''}`}
+              onClick={() => setActiveTab('published')}
+            >
+              🚀 公開済み ({articles.filter(a => a.status === 'published' || !a.status).length})
+            </button>
+            <button 
+              className={`tab ${activeTab === 'drafts' ? 'active' : ''}`}
+              onClick={() => setActiveTab('drafts')}
+            >
+              📝 下書き ({articles.filter(a => a.status === 'draft').length})
+            </button>
+          </div>
+
           {fetchLoading ? (
             <div className="articles-loading">
               <p>記事を読み込んでいます...</p>
@@ -131,17 +203,21 @@ export default function MyPage() {
             <div className="articles-error">
               <p>{error}</p>
             </div>
-          ) : articles.length === 0 ? (
+          ) : articles.filter(a => activeTab === 'drafts' ? a.status === 'draft' : (a.status === 'published' || !a.status)).length === 0 ? (
             <div className="no-articles">
-              <p>まだ記事がありません</p>
+              <p>{activeTab === 'drafts' ? 'まだ下書きがありません' : 'まだ公開済みの記事がありません'}</p>
               <Link href="/articles/new" className="create-first-article">
-                最初の記事を書く
+                {activeTab === 'drafts' ? '下書きを作成する' : '最初の記事を書く'}
               </Link>
             </div>
           ) : (
             <div className="articles-list">
-              {articles.map((article) => (
-                <div key={article.id} className="mypage-article-card">
+              {articles
+                .filter(a => activeTab === 'drafts' ? a.status === 'draft' : (a.status === 'published' || !a.status))
+                .map((article) => (
+                <div key={article.id} className="mypage-article-card">{article.status === 'draft' && (
+                    <span className="draft-badge">📝 下書き</span>
+                  )}
                   {article.thumbnail_url && (
                     <div className="mypage-thumbnail">
                       <Image
