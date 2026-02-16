@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useState, useEffect, use } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import './edit.css';
 
-export default function EditArticlePage() {
+export default function EditArticlePage({ params }) {
+  const resolvedParams = use(params);
   const [article, setArticle] = useState(null);
   const [content, setContent] = useState('');
   const [title, setTitle] = useState('');
@@ -16,9 +17,8 @@ export default function EditArticlePage() {
   const [error, setError] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  const params = useParams();
   const router = useRouter();
-  const slug = params.slug;
+  const slug = resolvedParams.slug;
 
   useEffect(() => {
     if (slug) {

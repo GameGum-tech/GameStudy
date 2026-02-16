@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { useRouter } from 'next/navigation';
 
 export default function Header() {
@@ -11,6 +12,7 @@ export default function Header() {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
   const { user, signOut, isSupabaseEnabled, signInWithDemo, isDemoMode } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const router = useRouter();
 
   // ドロップダウン外クリックで閉じる
@@ -63,6 +65,13 @@ export default function Header() {
           />
         </div>
         <nav className="main-nav">
+          <button 
+            onClick={toggleTheme}
+            className="theme-toggle-btn"
+            aria-label="テーマ切り替え"
+          >
+            {theme === 'light' ? '🌙' : '☀️'}
+          </button>
           {user ? (
             <>
               <Link href="/articles/new" className="create-btn">

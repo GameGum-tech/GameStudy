@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -78,6 +78,7 @@ function CustomMarkdownRenderer({ content }) {
 }
 
 export default function EnhancedArticleDetailPage({ params }) {
+  const resolvedParams = use(params);
   const router = useRouter();
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -88,12 +89,12 @@ export default function EnhancedArticleDetailPage({ params }) {
 
   useEffect(() => {
     fetchArticle();
-  }, [params.slug]);
+  }, [resolvedParams.slug]);
 
   const fetchArticle = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/articles/${params.slug}`);
+      const res = await fetch(`/api/articles/${resolvedParams.slug}`);
       const data = await res.json();
 
       if (!res.ok) {

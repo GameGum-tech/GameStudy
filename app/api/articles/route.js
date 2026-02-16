@@ -1,5 +1,8 @@
 import { pool } from "../../../lib/db";
 
+// Vercelでのビルドエラーを防ぐため、動的レンダリングを強制
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const client = await pool.connect();
 

@@ -1,4 +1,4 @@
-/* Enhanced GameStudy - Modern Blog System */
+/* Enhanced GameStudy - Modern Blog System with Theme Support */
 
 /* ===== リセットとベース設定 ===== */
 * {
@@ -7,6 +7,7 @@
   padding: 0;
 }
 
+/* ===== ライトモード（デフォルト） ===== */
 :root {
   --primary-color: #5271ff;
   --primary-dark: #3b5bff;
@@ -17,6 +18,26 @@
   --danger-color: #dc3545;
   --info-color: #17a2b8;
   
+  /* ライトモード用カラーパレット */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --bg-hover: #e2e8f0;
+  
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-tertiary: #64748b;
+  --text-muted: #94a3b8;
+  
+  --border-color: #e2e8f0;
+  --border-dark: #cbd5e1;
+  --border-light: #f1f5f9;
+  
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --shadow-color-sm: rgba(0, 0, 0, 0.05);
+  --shadow-color-lg: rgba(0, 0, 0, 0.15);
+  
+  /* 後方互換性のために残す */
   --gray-50: #f8fafc;
   --gray-100: #f1f5f9;
   --gray-200: #e2e8f0;
@@ -31,17 +52,64 @@
   --border-radius: 12px;
   --border-radius-sm: 8px;
   --border-radius-lg: 16px;
-  --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+  --shadow-sm: 0 2px 4px var(--shadow-color-sm);
   --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
-  --shadow-lg: 0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05);
-  --shadow-xl: 0 20px 25px rgba(0,0,0,0.1), 0 10px 10px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 15px var(--shadow-color), 0 4px 6px var(--shadow-color-sm);
+  --shadow-xl: 0 20px 25px var(--shadow-color), 0 10px 10px rgba(0,0,0,0.04);
+  
+  --card-bg: #ffffff;
+  --input-bg: #ffffff;
+  --code-bg: #1e293b;
+  --code-text: #e2e8f0;
+}
+
+/* ===== ダークモード ===== */
+[data-theme="dark"] {
+  --primary-color: #6b8aff;
+  --primary-dark: #5271ff;
+  --primary-light: #8fa5ff;
+  --secondary-color: #ff8563;
+  --success-color: #34d058;
+  --warning-color: #ffd93d;
+  --danger-color: #ff6b6b;
+  --info-color: #4fc3f7;
+  
+  /* ダークモード用カラーパレット */
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --bg-hover: #475569;
+  
+  --text-primary: #f8fafc;
+  --text-secondary: #e2e8f0;
+  --text-tertiary: #cbd5e1;
+  --text-muted: #94a3b8;
+  
+  --border-color: #334155;
+  --border-dark: #475569;
+  --border-light: #1e293b;
+  
+  --shadow-color: rgba(0, 0, 0, 0.4);
+  --shadow-color-sm: rgba(0, 0, 0, 0.2);
+  --shadow-color-lg: rgba(0, 0, 0, 0.5);
+  
+  --shadow-sm: 0 2px 4px var(--shadow-color-sm);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2);
+  --shadow-lg: 0 10px 15px var(--shadow-color), 0 4px 6px var(--shadow-color-sm);
+  --shadow-xl: 0 20px 25px var(--shadow-color), 0 10px 10px rgba(0,0,0,0.3);
+  
+  --card-bg: #1e293b;
+  --input-bg: #334155;
+  --code-bg: #0f172a;
+  --code-text: #e2e8f0;
 }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background: var(--gray-50);
-  color: var(--gray-800);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
   line-height: 1.6;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* ===== レイアウト ===== */
@@ -60,13 +128,14 @@ body {
 }
 
 .card {
-  background: white;
+  background: var(--card-bg);
   border-radius: var(--border-radius-lg);
   padding: 32px;
   box-shadow: var(--shadow-xl);
   max-width: 420px;
   width: 100%;
   text-align: center;
+  transition: background-color 0.3s ease;
 }
 
 .loading,
@@ -77,15 +146,16 @@ body {
 }
 
 .loading {
-  color: var(--gray-600);
+  color: var(--text-tertiary);
 }
 
 .error {
   color: var(--danger-color);
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   margin: 16px 0;
+  transition: all 0.3s ease;
 }
 
 /* ===== ホームページ ===== */
@@ -127,9 +197,10 @@ body {
 
 .status {
   font-family: "Monaco", "Menlo", monospace;
-  background: var(--gray-100);
+  background: var(--bg-tertiary);
   padding: 12px 16px;
   border-radius: var(--border-radius);
+  transition: background-color 0.3s ease;
   border: 1px dashed var(--gray-300);
   margin-top: 20px;
 }
@@ -276,7 +347,7 @@ body {
 
 .article-card h2 a {
   text-decoration: none;
-  color: var(--gray-800);
+  color: var(--text-primary);
   transition: color 0.2s ease;
 }
 
@@ -285,7 +356,7 @@ body {
 }
 
 .article-excerpt {
-  color: var(--gray-600);
+  color: var(--text-tertiary);
   margin-bottom: 16px;
   line-height: 1.6;
 }
@@ -295,7 +366,7 @@ body {
   justify-content: space-between;
   align-items: center;
   padding-top: 16px;
-  border-top: 1px solid var(--gray-200);
+  border-top: 1px solid var(--border-color);
 }
 
 .author-info {
@@ -310,13 +381,13 @@ body {
 
 .author-name {
   font-weight: 600;
-  color: var(--gray-700);
+  color: var(--text-secondary);
 }
 
 .article-stats {
   display: flex;
   gap: 12px;
-  color: var(--gray-500);
+  color: var(--text-tertiary);
   font-size: 0.9rem;
 }
 
@@ -356,8 +427,8 @@ body {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  border: 1px solid var(--gray-300);
-  background: white;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -365,12 +436,12 @@ body {
   justify-content: center;
   transition: all 0.2s ease;
   font-size: 10px;
-  color: var(--gray-600);
+  color: var(--text-tertiary);
 }
 
 .action-btn:hover {
-  background-color: var(--gray-100);
-  border-color: var(--gray-400);
+  background-color: var(--bg-hover);
+  border-color: var(--border-dark);
 }
 
 .action-btn .icon {
@@ -390,9 +461,10 @@ body {
 }
 
 .article-main-content {
-  background: white;
+  background: var(--card-bg);
   border-radius: var(--border-radius);
-  border: 1px solid var(--gray-200);
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
 }
 
 .article-header {
@@ -406,7 +478,7 @@ body {
 .default-thumbnail {
   width: 80px;
   height: 80px;
-  background-color: var(--gray-100);
+  background-color: var(--bg-tertiary);
   border-radius: var(--border-radius);
   display: flex;
   align-items: center;
@@ -430,7 +502,7 @@ body {
   align-items: center;
   gap: 16px;
   font-size: 0.9rem;
-  color: var(--gray-600);
+  color: var(--text-tertiary);
 }
 
 .author-info-top {
@@ -446,7 +518,7 @@ body {
 .article-body {
   padding: 0 48px 32px;
   line-height: 1.8;
-  color: var(--gray-800);
+  color: var(--text-primary);
 }
 
 /* ===== Markdownコンテンツのスタイル ===== */
@@ -456,7 +528,8 @@ body {
   margin-top: 48px;
   margin-bottom: 24px;
   padding-bottom: 8px;
-  border-bottom: 2px solid var(--gray-200);
+  border-bottom: 2px solid var(--border-color);
+  color: var(--text-primary);
 }
 
 .article-body h3 {
@@ -464,6 +537,7 @@ body {
   font-weight: 600;
   margin-top: 40px;
   margin-bottom: 20px;
+  color: var(--text-primary);
 }
 
 .article-body p {
@@ -491,8 +565,8 @@ body {
 }
 
 .article-body pre {
-  background-color: var(--gray-900);
-  color: var(--gray-100);
+  background-color: var(--code-bg);
+  color: var(--code-text);
   padding: 20px;
   border-radius: var(--border-radius-sm);
   margin-bottom: 24px;
@@ -501,6 +575,7 @@ body {
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
   font-size: 0.9rem;
   line-height: 1.6;
+  border: 1px solid var(--border-color);
 }
 
 .article-body pre::before {
@@ -525,7 +600,7 @@ body {
 
 .article-body code {
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
-  background-color: var(--gray-200);
+  background-color: var(--bg-tertiary);
   color: var(--danger-color);
   padding: 2px 6px;
   border-radius: 4px;
@@ -542,9 +617,10 @@ body {
 .article-body blockquote {
   margin: 0 0 20px 0;
   padding: 16px 24px;
-  background-color: var(--gray-100);
-  border-left: 4px solid var(--gray-300);
-  color: var(--gray-600);
+  background-color: var(--bg-tertiary);
+  border-left: 4px solid var(--border-dark);
+  color: var(--text-secondary);
+  transition: all 0.3s ease;
 }
 
 .article-body blockquote p {
@@ -561,7 +637,7 @@ body {
 
 .article-footer {
   padding: 24px 48px;
-  border-top: 1px solid var(--gray-200);
+  border-top: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -582,11 +658,18 @@ body {
 
 .edit-button {
   background: none;
-  border: 1px solid var(--gray-300);
+  border: 1px solid var(--border-color);
   padding: 8px 16px;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.3s ease;
+}
+
+.edit-button:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .right-sidebar {
@@ -599,10 +682,11 @@ body {
 }
 
 .author-profile-card {
-  background: white;
-  border: 1px solid var(--gray-200);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   padding: 16px;
+  transition: all 0.3s ease;
 }
 
 .author-header {
@@ -1129,16 +1213,18 @@ body {
 
 /* ===== note.com風UIスタイル ===== */
 .note-style-page {
-  background-color: #f8f8f8;
+  background-color: var(--bg-secondary);
+  transition: background-color 0.3s ease;
 }
 
 .note-header {
-  background-color: white;
-  border-bottom: 1px solid var(--gray-200);
+  background-color: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
   padding: 12px 0;
   position: sticky;
   top: 0;
   z-index: 1000;
+  transition: all 0.3s ease;
 }
 
 .note-header .container {
@@ -1163,15 +1249,18 @@ body {
   width: 100%;
   padding: 8px 16px;
   border-radius: 20px;
-  border: 1px solid var(--gray-300);
-  background-color: var(--gray-100);
+  border: 1px solid var(--border-color);
+  background-color: var(--input-bg);
+  color: var(--text-primary);
+  transition: all 0.3s ease;
 }
 
 .note-header .main-nav a {
   margin-left: 16px;
   text-decoration: none;
-  color: var(--gray-700);
+  color: var(--text-secondary);
   font-weight: 500;
+  transition: color 0.3s ease;
 }
 
 .note-header .main-nav .signup-btn {
@@ -1197,23 +1286,25 @@ body {
   display: block;
   padding: 12px 16px;
   text-decoration: none;
-  color: var(--gray-700);
+  color: var(--text-secondary);
   border-radius: 8px;
   font-weight: 500;
+  transition: all 0.3s ease;
 }
 
 .left-nav li.active a,
 .left-nav li a:hover {
-  background-color: var(--gray-100);
-  color: var(--gray-900);
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .content-area .section-title {
   font-size: 1.2rem;
   font-weight: bold;
   margin-bottom: 24px;
-  border-bottom: 1px solid var(--gray-200);
+  border-bottom: 1px solid var(--border-color);
   padding-bottom: 12px;
+  color: var(--text-primary);
 }
 
 .articles-grid-note {
@@ -1223,11 +1314,11 @@ body {
 }
 
 .article-card-note {
-  background: white;
+  background: var(--card-bg);
   border-radius: var(--border-radius);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .article-card-note:hover {
@@ -1271,7 +1362,7 @@ body {
   align-items: center;
   gap: 8px;
   font-size: 0.9rem;
-  color: var(--gray-600);
+  color: var(--text-tertiary);
 }
 
 .card-meta .author-avatar {
@@ -1280,20 +1371,22 @@ body {
 
 /* ===== フッター ===== */
 .join-banner {
-  background-color: #e3f2fd;
+  background-color: var(--bg-tertiary);
   padding: 48px 0;
   text-align: center;
   margin-top: 64px;
+  transition: background-color 0.3s ease;
 }
 
 .join-banner h2 {
   font-size: 2rem;
   margin-bottom: 8px;
+  color: var(--text-primary);
 }
 
 .join-banner p {
   font-size: 1.1rem;
-  color: var(--gray-700);
+  color: var(--text-secondary);
   margin-bottom: 24px;
 }
 
@@ -1312,10 +1405,11 @@ body {
 }
 
 .main-footer {
-  background-color: #f8f9fa;
+  background-color: var(--bg-tertiary);
   padding: 48px 0;
-  border-top: 1px solid var(--gray-200);
-  color: var(--gray-700);
+  border-top: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  transition: all 0.3s ease;
 }
 
 .footer-grid {
@@ -1328,13 +1422,19 @@ body {
 .footer-column h4 {
   font-size: 1.2rem;
   margin-bottom: 16px;
-  color: var(--gray-900);
+  color: var(--text-primary);
+}
+
+.footer-column p {
+  color: var(--text-tertiary);
+  line-height: 1.6;
+  font-size: 0.95rem;
 }
 
 .footer-column h5 {
   font-size: 1rem;
   margin-bottom: 12px;
-  color: var(--gray-800);
+  color: var(--text-primary);
   font-weight: 600;
 }
 
@@ -1349,7 +1449,7 @@ body {
 
 .footer-column a {
   text-decoration: none;
-  color: var(--gray-600);
+  color: var(--text-tertiary);
   transition: color 0.2s ease;
 }
 
@@ -1359,10 +1459,10 @@ body {
 
 .footer-bottom {
   text-align: center;
-  border-top: 1px solid var(--gray-200);
+  border-top: 1px solid var(--border-color);
   padding-top: 24px;
   font-size: 0.9rem;
-  color: var(--gray-500);
+  color: var(--text-muted);
 }
 
 
@@ -1633,18 +1733,19 @@ body {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  background: white;
-  border: 1px solid var(--gray-200);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-lg);
   min-width: 240px;
   z-index: 1000;
   overflow: hidden;
+  transition: all 0.3s ease;
 }
 
 .dropdown-header {
   padding: 16px;
-  border-bottom: 1px solid var(--gray-200);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .dropdown-user-info {
@@ -1655,18 +1756,18 @@ body {
 
 .dropdown-user-name {
   font-weight: 600;
-  color: var(--gray-800);
+  color: var(--text-primary);
   font-size: 0.95rem;
 }
 
 .dropdown-user-email {
   font-size: 0.85rem;
-  color: var(--gray-500);
+  color: var(--text-tertiary);
 }
 
 .dropdown-divider {
   height: 1px;
-  background-color: var(--gray-200);
+  background-color: var(--border-color);
   margin: 8px 0;
 }
 
@@ -1676,22 +1777,42 @@ body {
   padding: 12px 16px;
   text-align: left;
   text-decoration: none;
-  color: var(--gray-700);
+  color: var(--text-secondary);
   background: none;
   border: none;
   cursor: pointer;
   font-size: 0.9rem;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
 }
 
 .dropdown-item:hover {
-  background-color: var(--gray-100);
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .main-nav {
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+.theme-toggle-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--bg-hover);
+  transform: scale(1.1);
 }
 
 .demo-login-btn {
