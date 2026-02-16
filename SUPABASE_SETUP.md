@@ -3,101 +3,146 @@
 ## 概要
 このアプリケーションは、Supabaseを使用した認証機能を統合しています。Google、GitHub、メールによるサインイン/サインアップに対応しています。
 
-## セットアップ手順
+---
+
+## 🚀 クイックスタート
 
 ### 1. Supabaseプロジェクトの作成
 
-1. [Supabase](https://supabase.com)にアクセスし、新しいプロジェクトを作成します。
-2. プロジェクトが作成されたら、以下の情報を確認します：
-   - Project URL (例: `https://xxxxx.supabase.co`)
-   - Anon Key (公開用APIキー)
+1. [Supabase](https://supabase.com)にアクセスし、新しいプロジェクトを作成
+2. プロジェクトダッシュボードで以下の情報を取得：
+   - **Project URL**: Settings → API → Project URL
+   - **Anon Key**: Settings → API → anon public (公開用APIキー)
 
-### 2. 環境変数の設定
+### 2. ローカル環境の設定
 
-`.env.local`ファイルを作成し、以下の環境変数を設定します：
+`.env.local`ファイルを作成（既に作成済みの場合はスキップ）：
 
 ```bash
-# Supabase設定
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+# コピーして編集
+cp .env.local.example .env.local
+```
 
-# データベース接続（既存のPostgreSQL）
+`.env.local`を編集：
+```bash
+# Supabase設定（あなたのプロジェクトの値に置き換えてください）
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
+
+# データベース接続（Docker環境）
 DATABASE_URL=postgresql://user:password@db:5432/gamestudy
 ```
 
-### 3. Supabaseコンソールでの認証設定
+### 3. Supabaseの認証設定
 
-#### 3.1 Google認証の設定
+#### 🔵 Google認証の設定
 
-1. Supabaseダッシュボード → Authentication → Providers → Google
-2. [Google Cloud Console](https://console.cloud.google.com/)でOAuthクライアントIDを作成：
-   - 認証済みのリダイレクトURIに以下を追加：
-     - `https://your-project-ref.supabase.co/auth/v1/callback`
-3. Client IDとClient Secretを取得し、Supabaseに設定
+1. Supabaseダッシュボード → **Authentication** → **Providers** → **Google**
+2. [Google Cloud Console](https://console.cloud.google.com/) へ移動
+3. **APIs & Services** → **Credentials** → **Create Credentials** → **OAuth client ID**
+4. アプリケーションタイプ: **Web application**
+5. **認証済みのリダイレクトURI** に追加：
+   ```
+   https://your-project.supabase.co/auth/v1/callback
+   ```
+6. Client IDとClient Secretをコピーし、Supabaseに設定
+7. **Save** をクリック
 
-#### 3.2 GitHub認証の設定
+#### 🔶 GitHub認証の設定
 
-1. Supabaseダッシュボード → Authentication → Providers → GitHub
-2. [GitHub Developer Settings](https://github.com/settings/developers)でOAuth Appを作成：
-   - Authorization callback URLに以下を設定：
-     - `https://your-project-ref.supabase.co/auth/v1/callback`
-3. Client IDとClient Secretを取得し、Supabaseに設定
+1. Supabaseダッシュボード → **Authentication** → **Providers** → **GitHub**
+2. [GitHub Developer Settings](https://github.com/settings/developers) へ移動
+3. **New OAuth App** をクリック
+4. **Authorization callback URL** に設定：
+   ```
+   https://your-project.supabase.co/auth/v1/callback
+   ```
+5. Client IDとClient Secretをコピーし、Supabaseに設定
+6. **Save** をクリック
 
-#### 3.3 メール認証の設定
+#### ✉️ メール認証の設定
 
-1. Supabaseダッシュボード → Authentication → Providers → Email
-2. デフォルトで有効になっています
-3. 必要に応じて、メール確認を有効/無効に設定
+1. Supabaseダッシュボード → **Authentication** → **Providers** → **Email**
+2. デフォルトで有効（必要に応じてメール確認を有効/無効に設定）
 
-#### 3.4 サイトURLの設定
+#### 🌐 サイトURLとリダイレクトURLの設定
 
-1. Supabaseダッシュボード → Authentication → URL Configuration
-2. Site URLを設定：
+1. Supabaseダッシュボード → **Authentication** → **URL Configuration**
+2. **Site URL** を設定：
    - 開発環境: `http://localhost:3000`
-   - 本番環境: あなたのドメイン
-3. Redirect URLsに以下を追加：
-   - `http://localhost:3000/auth/callback`
-   - `https://your-domain.com/auth/callback`
+   - 本番環境: `https://your-domain.vercel.app`
+3. **Redirect URLs** に追加：
+   ```
+   http://localhost:3000/auth/callback
+   https://your-domain.vercel.app/auth/callback
+   ```
 
-### 4. パッケージのインストール
+---
+
+## 📦 Vercelへのデプロイ
+
+### ステップ1: Vercelプロジェクトの作成
+
+1. [Vercel](https://vercel.com) にログイン
+2. **New Project** → GitHubリポジトリを選択
+3. プロジェクト名を入力
+
+### ステップ2: 環境変数の設定
+
+Vercelダッシュボードで **Settings** → **Environment Variables** に移動し、以下を追加：
 
 ```bash
-# コンテナ内で実行
-docker exec -it gamestudy-web-1 npm install
+# Supabase設定
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
+
+# データベース接続（Supabase Postgresを使用する場合）
+DATABASE_URL=postgresql://postgres:[PASSWORD]@db.your-project.supabase.co:5432/postgres
 ```
 
-または、Dockerfileを再ビルド：
+**⚠️ 重要**: 
+- 本番環境では`DATABASE_URL`にSupabase PostgreSQLの接続文字列を使用してください
+- Supabaseダッシュボード → **Settings** → **Database** → **Connection string** → **URI**
+
+### ステップ3: デプロイ
 
 ```bash
-sudo docker compose down
-sudo docker compose up --build -d
+# コードをプッシュ
+git add .
+git commit -m "Add Supabase integration and fixes"
+git push origin main
 ```
 
-### 5. アプリケーションの起動
+Vercelが自動的にビルド・デプロイを開始します。
 
-```bash
-sudo docker compose up -d
-```
+### ステップ4: Supabaseのリダイレクトurl を更新
 
-## 主な機能
+デプロイ完了後、VercelのURLを取得し、Supabaseの設定を更新：
 
-### 認証機能
-- ✅ Googleアカウントでサインイン/サインアップ
-- ✅ GitHubアカウントでサインイン/サインアップ
-- ✅ メールアドレスでサインイン/サインアップ
-- ✅ ログアウト機能
+1. Supabaseダッシュボード → **Authentication** → **URL Configuration**
+2. **Site URL** を本番環境のURLに更新: `https://your-app.vercel.app`
+3. **Redirect URLs** に追加: `https://your-app.vercel.app/auth/callback`
 
-### ユーザー機能
-- ✅ ヘッダーにユーザーアイコン表示
-- ✅ ドロップダウンメニューでユーザー情報表示
-- ✅ マイページで自分の記事を管理
-- ✅ 記事の作成・編集・削除
+---
 
-## 主要なページとコンポーネント
+## ✅ 動作確認
 
-### ページ
-- `/login` - ログインページ
-- `/signup` - サインアップページ
+1. デプロイされたサイトにアクセス
+2. **ログイン** または **会員登録** をクリック
+3. Google / GitHub / メール でサインイン
+4. ユーザーアイコンが表示されることを確認
+5. **マイページ** で記事管理ができることを確認
+
+---
+
+## 🎭 デモモード
+
+Supabaseが設定されていない場合、アプリは自動的にデモモードで動作します：
+- ヘッダーに「🎭 デモモードでログイン」ボタンが表示
+- ローカルストレージを使用した擬似ログイン
+- 記事の作成・編集が可能（ただし永続化されません）
+
+---
 - `/auth/callback` - 認証コールバック
 - `/mypage` - マイページ（認証必須）
 - `/articles/new` - 記事作成ページ（認証必須）

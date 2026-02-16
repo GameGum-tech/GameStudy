@@ -4,13 +4,14 @@ import { pool } from "../../../../lib/db";
 export const dynamic = 'force-dynamic';
 
 export async function GET(request, { params }) {
+  const resolvedParams = await params;
   const client = await pool.connect();
 
   try {
     // ビュー数を増加
     await client.query(
       "UPDATE articles SET views_count = views_count + 1 WHERE slug = $1",
-      [params.slug]
+      [resolvedParams.slug]
     );
 
     const result = await client.query(`
@@ -26,7 +27,7 @@ export async function GET(request, { params }) {
       LEFT JOIN tags t ON at.tag_id = t.id
       WHERE a.slug = $1 AND a.published = true
       GROUP BY a.id, u.username, u.display_name, u.avatar_url, u.bio
-    `, [params.slug]);
+    `, [resolvedParams.slug]);
 
     if (result.rows.length === 0) {
       return Response.json({ error: "記事が見つかりません" }, { status: 404 });
@@ -45,6 +46,7 @@ export async function GET(request, { params }) {
 }
 
 export async function PUT(request, { params }) {
+  const resolvedParams = await params;
   const client = await pool.connect();
   try {
     const { title, content, excerpt, thumbnailUrl } = await request.json();
@@ -58,7 +60,7 @@ export async function PUT(request, { params }) {
        SET title = $1, content = $2, excerpt = $3, thumbnail_url = $4, updated_at = CURRENT_TIMESTAMP
        WHERE slug = $5
        RETURNING *`,
-      [title, content, excerpt, thumbnailUrl, params.slug]
+      [title, content, excerpt, thumbnailUrl, resolvedParams.slug]
     );
 
     if (result.rows.length === 0) {
