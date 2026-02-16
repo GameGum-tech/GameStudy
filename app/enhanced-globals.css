@@ -250,7 +250,9 @@ body {
   font-size: 1rem;
   box-shadow: var(--shadow-md);
   outline: none;
-  background: white;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  transition: all 0.3s ease;
 }
 
 .search-input:focus {
@@ -290,7 +292,7 @@ body {
 }
 
 .article-card {
-  background: white;
+  background: var(--card-bg);
   border-radius: var(--border-radius-lg);
   overflow: hidden;
   box-shadow: var(--shadow-lg);
@@ -711,12 +713,12 @@ body {
 
 .author-username {
   font-size: 0.9rem;
-  color: var(--gray-500);
+  color: var(--text-muted);
 }
 
 .author-bio {
   font-size: 0.85rem;
-  color: var(--gray-600);
+  color: var(--text-tertiary);
   margin-bottom: 12px;
 }
 
@@ -732,20 +734,22 @@ body {
 }
 
 .table-of-contents {
-  background: none;
-  border: none;
-  padding: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  padding: 20px;
+  border-radius: var(--border-radius);
+  transition: all 0.3s ease;
 }
 
 .table-of-contents h3 {
   font-size: 0.9rem;
   font-weight: 700;
-  color: var(--gray-500);
+  color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 16px;
   padding-bottom: 8px;
-  border-bottom: 1px solid var(--gray-200);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .table-of-contents ul {
@@ -754,18 +758,20 @@ body {
 }
 
 .toc-item a {
-  color: var(--gray-600);
+  color: var(--text-tertiary);
   text-decoration: none;
   font-size: 0.9rem;
   display: block;
   padding: 6px 0;
   border-left: 2px solid transparent;
   padding-left: 10px;
+  transition: all 0.2s ease;
 }
 
 .toc-item a:hover {
   color: var(--primary-color);
-  background-color: #5271ff10;
+  background-color: var(--bg-hover);
+  border-left-color: var(--primary-color);
 }
 
 .toc-item.level-3 a {
@@ -778,8 +784,9 @@ body {
 /* ===== 記事詳細ページ（Enhanced） ===== */
 .enhanced-article-detail {
   min-height: 100vh;
-  background: var(--gray-50);
+  background: var(--bg-secondary);
   padding: 20px 0;
+  transition: background-color 0.3s ease;
 }
 
 .breadcrumb {
@@ -832,12 +839,13 @@ body {
 }
 
 .author-card {
-  background: white;
+  background: var(--card-bg);
   padding: 24px;
   border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow-md);
   margin-bottom: 24px;
   text-align: center;
+  transition: all 0.3s ease;
 }
 
 .author-avatar-large {
@@ -847,17 +855,17 @@ body {
 
 .author-info h4 {
   margin-bottom: 4px;
-  color: var(--gray-800);
+  color: var(--text-primary);
 }
 
 .author-username {
-  color: var(--gray-500);
+  color: var(--text-muted);
   font-size: 0.9rem;
   margin-bottom: 12px;
 }
 
 .author-bio {
-  color: var(--gray-600);
+  color: var(--text-tertiary);
   font-size: 0.9rem;
   line-height: 1.5;
 }
@@ -871,13 +879,14 @@ body {
 
 .action-btn {
   padding: 12px 16px;
-  border: 2px solid var(--gray-200);
-  background: white;
+  border: 2px solid var(--border-color);
+  background: var(--card-bg);
   border-radius: var(--border-radius);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: center;
+  color: var(--text-secondary);
 }
 
 .action-btn:hover {
@@ -904,15 +913,16 @@ body {
 }
 
 .table-of-contents {
-  background: white;
+  background: var(--card-bg);
   padding: 24px;
   border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow-md);
+  transition: all 0.3s ease;
 }
 
 .table-of-contents h3 {
   margin-bottom: 16px;
-  color: var(--gray-800);
+  color: var(--text-primary);
 }
 
 .table-of-contents ul {
@@ -924,7 +934,7 @@ body {
 }
 
 .toc-item a {
-  color: var(--gray-600);
+  color: var(--text-tertiary);
   text-decoration: none;
   font-size: 0.9rem;
   transition: color 0.2s ease;
@@ -935,10 +945,11 @@ body {
 }
 
 .article-main {
-  background: white;
+  background: var(--card-bg);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow-lg);
   overflow: hidden;
+  transition: all 0.3s ease;
 }
 
 .article-content {
@@ -1163,15 +1174,16 @@ body {
 }
 
 .btn-save:disabled {
-  background: var(--gray-400);
+  background: var(--text-muted);
   cursor: not-allowed;
   transform: none;
 }
 
 .editor {
-  background: white;
+  background: var(--card-bg);
   border-radius: var(--border-radius-lg);
   padding: 40px;
+  transition: all 0.3s ease;
   box-shadow: var(--shadow-lg);
 }
 
@@ -1480,7 +1492,7 @@ body {
   font-size: 1.25rem;
   margin-top: 2em;
   margin-bottom: 1em;
-  color: var(--gray-900);
+  color: var(--text-primary);
 }
 
 .article-body .markdown-content p {
@@ -1489,15 +1501,15 @@ body {
 }
 
 .article-body .markdown-content pre {
-  border: 1px solid var(--gray-200);
+  border: 1px solid var(--border-color);
   border-radius: var(--border-radius-sm);
-  background-color: #2d2d2d;
+  background-color: var(--code-bg);
 }
 
 .article-body .markdown-content blockquote {
-  color: var(--gray-600);
-  background-color: var(--gray-100);
-  border-left-color: var(--gray-300);
+  color: var(--text-secondary);
+  background-color: var(--bg-tertiary);
+  border-left-color: var(--border-dark);
   padding: 16px;
   border-radius: var(--border-radius-sm);
 }

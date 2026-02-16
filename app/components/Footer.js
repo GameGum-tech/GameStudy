@@ -15,13 +15,13 @@ export default function Footer() {
           <div className="footer-grid">
             <div className="footer-column">
               <h4>GameStudy</h4>
-              <p>エンジニアのための情報共有コミュニティ</p>
+              <p>ゲームクリエーターのための情報共有コミュニティ</p>
             </div>
             <div className="footer-column">
               <h5>About</h5>
               <ul>
                 <li><Link href="#">GameStudyについて</Link></li>
-                <li><Link href="#">運営会社</Link></li>
+                <li><Link href="https://gamegum.jp/">運営会社</Link></li>
                 <li><Link href="#">お知らせ・リリース</Link></li>
                 <li><Link href="#">イベント</Link></li>
               </ul>
@@ -38,9 +38,9 @@ export default function Footer() {
             <div className="footer-column">
               <h5>Links</h5>
               <ul>
-                <li><Link href="#">X (Twitter)</Link></li>
-                <li><Link href="#">GitHub</Link></li>
-                <li><Link href="#">メディアキット</Link></li>
+                <li><Link href="https://x.com/GameGum_Japan">X (Twitter)</Link></li>
+                <li><Link href="https://github.com/GameGum-tech">GitHub</Link></li>
+                <li><Link href="https://lit.link/gamegum">メディアキット</Link></li>
               </ul>
             </div>
             <div className="footer-column">
@@ -53,7 +53,7 @@ export default function Footer() {
             </div>
           </div>
           <div className="footer-bottom">
-            <p>&copy; {new Date().getFullYear()} GameStudy Inc.</p>
+            <p>&copy; {new Date().getFullYear()} GameGum Inc.</p>
           </div>
         </div>
       </footer>
