@@ -1,6 +1,20 @@
 # Vercelデプロイ時のエラー修正手順
 
-## 修正内容
+## 🔍 現在のエラー分析
+
+### エラー内容
+```
+GET /api/articles 500 (Internal Server Error)
+```
+
+### 原因の可能性
+1. **データベース接続エラー** - Vercel環境変数が未設定または不正
+2. **テーブルが存在しない** - Supabaseにテーブルが作成されていない
+3. **DATABASE_URLが不正** - パスワードまたは接続文字列が間違っている
+
+---
+
+## ✅ 修正内容
 
 ### 1. データベース接続の修正 ✅
 
@@ -11,63 +25,102 @@
 // そうでない場合は個別の環境変数を使用（Docker等）
 ```
 
+### 2. APIルートにエラーログ追加 ✅
+
+`app/api/articles/route.js`に詳細なエラーログを追加しました。
+Vercelのログを確認することで、具体的なエラー原因を特定できます。
+
 ---
 
-## Vercel環境変数の設定
+## 📋 デプロイ前チェックリスト
 
-Vercelダッシュボードで以下の環境変数を設定してください：
+### ステップ1: Supabaseでテーブルを作成
 
-### 必須環境変数
+**重要**: Vercelエラーの原因は、Supabaseにテーブルが存在しないことです。
+
+1. [Supabase Dashboard](https://supabase.com/dashboard) にログイン
+2. プロジェクト（rdhibzwnkfgrvlvjgpwm）を選択
+3. 左サイドバーから **SQL Editor** をクリック
+4. **New Query** をクリック
+5. [`database/supabase-migration.sql`](database/supabase-migration.sql) の内容をすべてコピー&ペースト
+6. **Run** ボタンをクリックして実行
+7. ✅ "Success. No rows returned" と表示されれば成功
+
+### ステップ2: Vercel環境変数の設定
+
+**必須環境変数**:
 
 ```bash
 # Supabase設定
 NEXT_PUBLIC_SUPABASE_URL=https://rdhibzwnkfgrvlvjgpwm.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
-# データベース接続
+# データベース接続（重要！）
 DATABASE_URL=postgresql://postgres:[YOUR_PASSWORD]@db.rdhibzwnkfgrvlvjgpwm.supabase.co:5432/postgres
 ```
 
-### DATABASE_URLの取得方法
+#### DATABASE_URLの取得方法:
 
-1. [Supabase Dashboard](https://supabase.com/dashboard)にログイン
-2. プロジェクト（rdhibzwnkfgrvlvjgpwm）を選択
-3. **Settings** → **Database** をクリック
-4. **Connection string** タブ → **URI** を選択
-5. `[YOUR_PASSWORD]`を実際のデータベースパスワードに置き換え
-6. コピーしたURLをVercelの`DATABASE_URL`に設定
+1. Supabase Dashboard → プロジェクト選択
+2. **Settings** → **Database** をクリック
+3. **Connection string** タブを選択
+4. **URI** を選択（Transaction modeではなく）
+5. 表示された文字列をコピー
+   ```
+   postgresql://postgres:[YOUR-PASSWORD]@db.rdhibzwnkfgrvlvjgpwm.supabase.co:5432/postgres
+   ```
+6. `[YOUR-PASSWORD]` をプロジェクト作成時に設定した実際のパスワードに置き換え
 
----
+#### Vercel環境変数の追加:
 
-## Vercel環境変数の設定手順
-
-1. [Vercel Dashboard](https://vercel.com/dashboard)にログイン
-2. デプロイしたプロジェクト（game-study-1v4r）を選択
+1. [Vercel Dashboard](https://vercel.com/dashboard) にログイン
+2. プロジェクト（game-study-1v4r）を選択
 3. **Settings** → **Environment Variables** をクリック
-4. 上記の環境変数を追加：
+4. 上記3つの環境変数を追加：
    - Variable Name: `NEXT_PUBLIC_SUPABASE_URL`
    - Value: `https://rdhibzwnkfgrvlvjgpwm.supabase.co`
-   - Environment: **Production**, **Preview**, **Development** すべてチェック
-5. **Add** をクリックして追加
-6. 同様に他の環境変数も追加
+   - Environment: **Production**, **Preview**, **Development** すべてチェック ✓
+5. **Save** をクリック
+6. 同様に `NEXT_PUBLIC_SUPABASE_ANON_KEY` と `DATABASE_URL` も追加
 
----
-
-## 再デプロイ
-
-### 方法1: コードをプッシュして自動デプロイ
+### ステップ3: コードをプッシュして再デプロイ
 
 ```bash
+# 変更をコミット
 git add .
-git commit -m "Fix database connection for Vercel deployment"
+git commit -m "Fix database connection and add error logging"
 git push origin main
 ```
 
-### 方法2: Vercel Dashboardから手動デプロイ
+Vercelが自動的にビルド・デプロイを開始します（約2-3分）。
 
-1. Vercel Dashboard → プロジェクトページ
-2. **Deployments** タブ → 最新のデプロイを選択
-3. **Redeploy** ボタンをクリック
+---
+
+## 🔍 Vercelログの確認方法
+
+デプロイ後もエラーが続く場合、Vercelのログで原因を確認：
+
+1. [Vercel Dashboard](https://vercel.com/dashboard) → プロジェクトを選択
+2. 上部メニューの **Logs** をクリック
+3. **Runtime Logs** タブを選択
+4. サイトにアクセスして `/api/articles` を開く
+5. ログに以下のようなエラーメッセージが表示されます：
+   ```
+   記事一覧取得エラー: relation "articles" does not exist
+   ```
+   または
+   ```
+   データベース接続エラー: password authentication failed
+   ```
+
+### エラーメッセージと解決策:
+
+| エラーメッセージ | 原因 | 解決策 |
+|---------------|------|--------|
+| `relation "articles" does not exist` | テーブルが存在しない | ステップ1のSQL実行 |
+| `password authentication failed` | DATABASE_URLのパスワードが間違い | 正しいパスワードを設定 |
+| `connection timeout` | 接続文字列が不正 | DATABASE_URLを再確認 |
+| `no pg_hba.conf entry` | SSL設定の問題 | lib/db.jsで修正済み |
 
 ---
 
