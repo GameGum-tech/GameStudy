@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '../../contexts/AuthContext';
 import './mypage.css';
 
-export default function MyPage() {
+// メインコンテンツコンポーネント
+function MyPageContent() {
   const { user, loading, isDemoMode } = useAuth();
   const [articles, setArticles] = useState([]);
   const [fetchLoading, setFetchLoading] = useState(true);
@@ -260,5 +261,23 @@ export default function MyPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// ローディングフォールバック
+function MyPageLoading() {
+  return (
+    <div className="mypage-loading">
+      <p>読み込み中...</p>
+    </div>
+  );
+}
+
+// メインエクスポート
+export default function MyPage() {
+  return (
+    <Suspense fallback={<MyPageLoading />}>
+      <MyPageContent />
+    </Suspense>
   );
 }
