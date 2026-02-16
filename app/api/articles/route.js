@@ -78,45 +78,107 @@ export async function GET() {
 }
 
 export async function POST(request) {
-  const client = await pool.connect();
+  console.log('📝 POST /api/articles called');
 
   try {
-    const { title, content, excerpt, thumbnailUrl, slug, authorId } = await request.json();
+    const body = await request.json();
+    console.log('Request body:', { 
+      title: body.title?.substring(0, 50),
+      slug: body.slug,
+      authorId: body.authorId 
+    });
+
+    const { title, content, excerpt, thumbnailUrl, slug, authorId } = body;
 
     if (!title || !content || !slug) {
+      console.error('❌ Validation error: missing required fields');
       return Response.json(
         { error: "タイトル、本文、スラッグは必須です" },
         { status: 400 }
       );
     }
 
-    // デフォルトのユーザーID（認証実装後は実際のユーザーIDを使用）
-    const userId = authorId || 1;
+    console.log('🔌 Attempting to connect to database...');
+    const client = await pool.connect();
+    console.log('✅ Database connection successful');
 
-    const result = await client.query(
-      `INSERT INTO articles (title, content, excerpt, thumbnail_url, slug, author_id, published)
-       VALUES ($1, $2, $3, $4, $5, $6, true)
-       RETURNING *`,
-      [title, content, excerpt || content.substring(0, 200), thumbnailUrl, slug, userId]
-    );
+    try {
+      // デフォルトのユーザーID（認証実装後は実際のユーザーIDを使用）
+      const userId = authorId || 1;
 
-    return Response.json({ article: result.rows[0] }, { status: 201 });
-  } catch (error) {
-    console.error("記事作成エラー:", error);
-    
-    // スラッグの重複エラーをチェック
-    if (error.code === '23505') {
-      return Response.json(
-        { error: "同じスラッグの記事が既に存在します" },
-        { status: 409 }
+      // ユーザーが存在するか確認
+      const userCheck = await client.query(
+        'SELECT id FROM users WHERE id = $1',
+        [userId]
       );
-    }
 
+      if (userCheck.rows.length === 0) {
+        console.error('❌ User not found:', userId);
+        return Response.json(
+          { error: "ユーザーが見つかりません。Supabaseでusersテーブルを確認してください。" },
+          { status: 404 }
+        );
+      }
+
+      console.log('📊 Inserting article...');
+      const result = await client.query(
+        `INSERT INTO articles (title, content, excerpt, thumbnail_url, slug, author_id, published)
+         VALUES ($1, $2, $3, $4, $5, $6, true)
+         RETURNING *`,
+        [title, content, excerpt || content.substring(0, 200), thumbnailUrl, slug, userId]
+      );
+
+      console.log('✅ Article created successfully:', result.rows[0].id);
+      return Response.json({ article: result.rows[0] }, { status: 201 });
+    } catch (error) {
+      console.error("❌ 記事作成エラー:", error);
+      console.error("Error details:", {
+        message: error.message,
+        code: error.code,
+        detail: error.detail,
+        hint: error.hint,
+      });
+      
+      // スラッグの重複エラーをチェック
+      if (error.code === '23505') {
+        return Response.json(
+          { error: "同じスラッグの記事が既に存在します" },
+          { status: 409 }
+        );
+      }
+
+      // 外部キー制約エラー（ユーザーが存在しない）
+      if (error.code === '23503') {
+        return Response.json(
+          { error: "指定されたユーザーが存在しません" },
+          { status: 400 }
+        );
+      }
+
+      return Response.json(
+        { 
+          error: "記事の作成に失敗しました",
+          details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        },
+        { status: 500 }
+      );
+    } finally {
+      client.release();
+    }
+  } catch (connectionError) {
+    console.error("❌ データベース接続エラー:", connectionError);
+    console.error("Connection error details:", {
+      message: connectionError.message,
+      code: connectionError.code,
+      name: connectionError.name,
+    });
+    
     return Response.json(
-      { error: "記事の作成に失敗しました" },
+      { 
+        error: "データベースに接続できません",
+        details: process.env.NODE_ENV === 'development' ? connectionError.message : undefined
+      },
       { status: 500 }
     );
-  } finally {
-    client.release();
   }
 }
