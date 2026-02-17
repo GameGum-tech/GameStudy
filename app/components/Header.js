@@ -55,7 +55,10 @@ export default function Header() {
   return (
     <header className="note-header">
       <div className="container">
-        <Link href="/" className="logo">GameStudy</Link>
+        <Link href="/" className="logo">
+          GameStudy
+          <span className="beta-badge">Beta</span>
+        </Link>
         <div className="search-container">
           <input 
             type="text" 
