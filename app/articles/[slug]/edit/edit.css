@@ -506,3 +506,292 @@
   border-top: 1px solid var(--border-color);
   margin: 32px 0;
 }
+
+/* タグ選択エリア */
+.tag-selection-area {
+  margin-top: 12px;
+  padding: 16px;
+  background-color: var(--bg-tertiary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.tag-selection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.tag-selection-header label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.tag-count {
+  color: var(--text-tertiary);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.selected-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.available-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.tag-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.tag-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tag-badge.selected {
+  color: white !important;
+}
+
+.tag-add-btn {
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background-color: var(--bg-primary);
+  color: var(--primary-color);
+  border: 2px dashed var(--primary-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tag-add-btn:hover:not(:disabled) {
+  background-color: var(--primary-color);
+  color: white;
+  border-style: solid;
+}
+
+.tag-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.new-tag-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.new-tag-input {
+  padding: 6px 12px;
+  border-radius: 16px;
+  border: 2px solid var(--border-color);
+  background-color: var(--input-bg);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.new-tag-input:focus {
+  border-color: var(--primary-color);
+}
+
+.tag-create-btn {
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background-color: var(--success-color);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tag-create-btn:hover {
+  background-color: #22863a;
+  transform: translateY(-1px);
+}
+
+.tag-cancel-btn {
+  padding: 6px 10px;
+  border-radius: 50%;
+  font-size: 1rem;
+  font-weight: bold;
+  background-color: var(--bg-primary);
+  color: var(--text-tertiary);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tag-cancel-btn:hover {
+  background-color: var(--danger-color);
+  color: white;
+  border-color: var(--danger-color);
+}
+
+/* 新しいタグ入力UI */
+.tag-selection-area-new {
+  margin-top: 12px;
+}
+
+.tag-input-label {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+}
+
+.tag-input-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background-color: var(--input-bg);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  min-height: 42px;
+  transition: all 0.2s ease;
+}
+
+.tag-input-wrapper:focus-within {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.selected-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background-color: rgba(82, 113, 255, 0.1);
+  color: var(--primary-color);
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.remove-tag-btn {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 2px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.remove-tag-btn:hover {
+  opacity: 1;
+}
+
+.tag-text-input {
+  flex: 1;
+  min-width: 120px;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  padding: 4px 0;
+}
+
+.tag-text-input::placeholder {
+  color: var(--text-muted);
+}
+
+.tag-text-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tag-count-indicator {
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+
+.tag-suggestions-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.tag-suggestion-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.tag-suggestion-item:hover {
+  background-color: var(--bg-hover);
+}
+
+.tag-suggestion-item.no-results {
+  cursor: default;
+  color: var(--text-tertiary);
+}
+
+.tag-suggestion-item.no-results:hover {
+  background-color: transparent;
+}
+
+.tag-suggestion-name {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.tag-suggestion-count {
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+}
+
+.edit-metadata {
+  position: relative;
+}

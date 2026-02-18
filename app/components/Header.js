@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState, useRef, useEffect } from 'react';
+import { Suspense, useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useRouter } from 'next/navigation';
+import TagNavigation from './TagNavigation';
 
 export default function Header() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -134,6 +135,11 @@ export default function Header() {
           )}
         </nav>
       </div>
+      
+      {/* タグナビゲーション */}
+      <Suspense fallback={<div className="tag-navigation-wrapper"><nav className="tag-navigation"></nav></div>}>
+        <TagNavigation />
+      </Suspense>
     </header>
   );
 }

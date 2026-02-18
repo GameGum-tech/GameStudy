@@ -86,10 +86,11 @@ export async function POST(request) {
       title: body.title?.substring(0, 50),
       slug: body.slug,
       authorId: body.authorId,
-      status: body.status
+      status: body.status,
+      tags: body.tags
     });
 
-    const { title, content, excerpt, thumbnailUrl, slug, authorId, status } = body;
+    const { title, content, excerpt, thumbnailUrl, slug, authorId, status, tags } = body;
 
     if (!title || !content || !slug) {
       console.error('❌ Validation error: missing required fields');
@@ -179,8 +180,24 @@ export async function POST(request) {
         ]
       );
 
-      console.log('✅ Article created successfully:', result.rows[0].id, 'status:', articleStatus);
-      return Response.json({ article: result.rows[0] }, { status: 201 });
+      const createdArticle = result.rows[0];
+      console.log('✅ Article created successfully:', createdArticle.id, 'status:', articleStatus);
+
+      // タグを保存
+      if (tags && Array.isArray(tags) && tags.length > 0) {
+        console.log('📌 Saving tags:', tags);
+        for (const tagId of tags) {
+          await client.query(
+            `INSERT INTO article_tags (article_id, tag_id)
+             VALUES ($1, $2)
+             ON CONFLICT DO NOTHING`,
+            [createdArticle.id, tagId]
+          );
+        }
+        console.log('✅ Tags saved successfully');
+      }
+
+      return Response.json({ article: createdArticle }, { status: 201 });
     } catch (error) {
       console.error("❌ 記事作成エラー:", error);
       console.error("Error details:", {

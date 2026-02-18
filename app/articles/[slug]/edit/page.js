@@ -15,6 +15,10 @@ export default function EditArticlePage({ params }) {
   const [content, setContent] = useState('');
   const [title, setTitle] = useState('');
   const [thumbnailUrl, setThumbnailUrl] = useState('');
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [availableTags, setAvailableTags] = useState([]);
+  const [tagInput, setTagInput] = useState('');
+  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -66,6 +70,23 @@ export default function EditArticlePage({ params }) {
     }
   }, [user]);
 
+  // タグ一覧を取得
+  useEffect(() => {
+    fetchTags();
+  }, []);
+
+  const fetchTags = async () => {
+    try {
+      const res = await fetch('/api/tags');
+      const data = await res.json();
+      if (res.ok) {
+        setAvailableTags(data.tags || []);
+      }
+    } catch (error) {
+      console.error('タグの取得に失敗:', error);
+    }
+  };
+
   // 認証チェック
   useEffect(() => {
     if (!authLoading && !user) {
@@ -94,6 +115,7 @@ export default function EditArticlePage({ params }) {
       setTitle(article.title || '');
       setContent(article.content || '');
       setThumbnailUrl(article.thumbnail_url || '');
+      setSelectedTags(article.tags || []); // 既存のタグを設定
       
       // ユーザーの記事一覧を取得して作成者チェック
       console.log('🔍 Checking if user is author:', { userId: user.id, articleId: article.id });
@@ -150,7 +172,8 @@ export default function EditArticlePage({ params }) {
         content,
         excerpt: content.substring(0, 200),
         thumbnailUrl: thumbnailUrl,
-        authorId: user.id  // 作成者IDを送信（UUID）
+        authorId: user.id,  // 作成者IDを送信（UUID）
+        tags: selectedTags.map(t => t.id), // タグIDの配列を送信
       };
       
       // statusが指定されている場合のみ追加
@@ -187,6 +210,92 @@ export default function EditArticlePage({ params }) {
       setIsSaving(false);
     }
   };
+
+  const handleTagToggle = (tag) => {
+    if (selectedTags.find(t => t.id === tag.id)) {
+      setSelectedTags(selectedTags.filter(t => t.id !== tag.id));
+    } else if (selectedTags.length < 5) {
+      setSelectedTags([...selectedTags, tag]);
+      setTagInput('');
+      setShowTagSuggestions(false);
+    } else {
+      setError('タグは最大5つまで選択できます');
+      setTimeout(() => setError(null), 3000);
+    }
+  };
+
+  const handleTagInputChange = (e) => {
+    const value = e.target.value;
+    setTagInput(value);
+    
+    if (value.startsWith('#')) {
+      setShowTagSuggestions(true);
+    } else {
+      setShowTagSuggestions(false);
+    }
+  };
+
+  const handleTagInputKeyDown = async (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      
+      const tagName = tagInput.replace(/^#/, '').trim();
+      
+      if (!tagName) return;
+      
+      if (selectedTags.length >= 5) {
+        setError('タグは最大5つまで選択できます');
+        setTimeout(() => setError(null), 3000);
+        return;
+      }
+
+      const existingTag = availableTags.find(
+        t => t.name.toLowerCase() === tagName.toLowerCase()
+      );
+
+      if (existingTag) {
+        if (!selectedTags.find(t => t.id === existingTag.id)) {
+          setSelectedTags([...selectedTags, existingTag]);
+        }
+        setTagInput('');
+        setShowTagSuggestions(false);
+      } else {
+        try {
+          const res = await fetch('/api/tags', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: tagName }),
+          });
+
+          const data = await res.json();
+          if (res.ok) {
+            const newTag = data.tag;
+            if (!availableTags.find(t => t.id === newTag.id)) {
+              setAvailableTags([...availableTags, { ...newTag, article_count: 0 }]);
+            }
+            if (!selectedTags.find(t => t.id === newTag.id)) {
+              setSelectedTags([...selectedTags, newTag]);
+            }
+            setTagInput('');
+            setShowTagSuggestions(false);
+          }
+        } catch (error) {
+          console.error('タグの作成に失敗:', error);
+        }
+      }
+    } else if (e.key === 'Backspace' && !tagInput && selectedTags.length > 0) {
+      setSelectedTags(selectedTags.slice(0, -1));
+    }
+  };
+
+  const removeTag = (tagId) => {
+    setSelectedTags(selectedTags.filter(t => t.id !== tagId));
+  };
+
+  const filteredSuggestions = availableTags.filter(tag => {
+    const query = tagInput.replace(/^#/, '').toLowerCase();
+    return tag.name.toLowerCase().includes(query) && !selectedTags.find(t => t.id === tag.id);
+  });
 
   if (authLoading || loading) {
     return (
@@ -281,6 +390,68 @@ export default function EditArticlePage({ params }) {
           className="thumbnail-input"
           placeholder="サムネイル画像のURL（オプション）"
         />
+        
+        {/* タグ選択UI */}
+        <div className="tag-selection-area-new">
+          <label className="tag-input-label">🏷️ タグを追加（最大5つ） - 「#」で候補を表示</label>
+          
+          <div className="tag-input-wrapper">
+            {selectedTags.map(tag => (
+              <span 
+                key={tag.id} 
+                className="selected-tag-chip"
+              >
+                #{tag.name}
+                <button
+                  type="button"
+                  className="remove-tag-btn"
+                  onClick={() => removeTag(tag.id)}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+            
+            <input
+              type="text"
+              value={tagInput}
+              onChange={handleTagInputChange}
+              onKeyDown={handleTagInputKeyDown}
+              onFocus={() => { if (tagInput.startsWith('#')) setShowTagSuggestions(true); }}
+              onBlur={() => setTimeout(() => setShowTagSuggestions(false), 200)}
+              placeholder={selectedTags.length === 0 ? "#タグ名を入力..." : ""}
+              className="tag-text-input"
+              disabled={selectedTags.length >= 5}
+            />
+          </div>
+          
+          <div className="tag-count-indicator">{selectedTags.length}/5 タグ選択中</div>
+          
+          {showTagSuggestions && tagInput.startsWith('#') && (
+            <div className="tag-suggestions-dropdown">
+              {filteredSuggestions.length > 0 ? (
+                filteredSuggestions.slice(0, 10).map(tag => (
+                  <div
+                    key={tag.id}
+                    className="tag-suggestion-item"
+                    onMouseDown={() => handleTagToggle(tag)}
+                  >
+                    <span className="tag-suggestion-name">#{tag.name}</span>
+                    <span className="tag-suggestion-count">
+                      {tag.article_count || 0} 件の記事
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="tag-suggestion-item no-results">
+                  <span className="tag-suggestion-name">
+                    Enterで新しいタグ「{tagInput.replace(/^#/, '')}」を作成
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <main className="editor-layout">

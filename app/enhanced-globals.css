@@ -560,6 +560,7 @@ body {
   gap: 16px;
   font-size: 0.9rem;
   color: var(--text-tertiary);
+  margin-bottom: 12px;
 }
 
 .author-info-top {
@@ -570,6 +571,36 @@ body {
 
 .author-avatar-small {
   border-radius: 50%;
+}
+
+.article-header-content .tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+  margin-bottom: 12px;
+}
+
+.article-header-content .edit-button {
+  margin-top: 16px;
+  padding: 10px 20px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.article-header-content .edit-button:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.article-header-content .edit-button:active {
+  transform: translateY(0);
 }
 
 .article-body {
@@ -1287,7 +1318,7 @@ body {
 .note-header {
   background-color: var(--bg-primary);
   border-bottom: 1px solid var(--border-color);
-  padding: 12px 0;
+  padding: 0; /* paddingを削除して子要素で管理 */
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -1298,6 +1329,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 12px 24px; /* ここにpaddingを移動 */
 }
 
 .note-header .logo {
@@ -1355,6 +1387,82 @@ body {
   color: white;
   padding: 8px 16px;
   border-radius: 20px;
+}
+
+/* タグナビゲーション */
+.tag-navigation-wrapper {
+  background-color: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.tag-navigation-wrapper::-webkit-scrollbar {
+  height: 4px;
+}
+
+.tag-navigation-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tag-navigation-wrapper::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 2px;
+}
+
+.tag-navigation-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--border-dark);
+}
+
+.tag-navigation {
+  display: flex;
+  gap: 0;
+  padding: 0 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  white-space: nowrap;
+}
+
+.tag-nav-item {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 20px;
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
+  flex-shrink: 0;
+}
+
+.tag-nav-item:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-hover);
+}
+
+.tag-nav-item.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+  font-weight: 600;
+}
+
+.tag-nav-item.external-link {
+  color: var(--info-color);
+}
+
+.tag-nav-item.external-link:hover {
+  color: var(--primary-color);
+}
+
+.tag-nav-divider {
+  width: 1px;
+  background-color: var(--border-color);
+  margin: 8px 0;
+  flex-shrink: 0;
 }
 
 .main-layout {
@@ -1456,6 +1564,33 @@ body {
   margin: 0 0 12px;
   line-height: 1.4;
   min-height: 3.9em; /* 3 lines */
+}
+
+.article-tags {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  max-height: 1.8em;
+}
+
+.article-tag {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-weight: 500;
+  white-space: nowrap;
+  background-color: rgba(82, 113, 255, 0.1);
+  color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.no-articles {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-tertiary);
+  font-size: 1.1rem;
 }
 
 .card-meta {
@@ -1901,13 +2036,14 @@ body {
   
   /* note-headerの追加調整 */
   .note-header {
-    padding: 10px 0;
+    padding: 0; /* paddingを削除 */
   }
   
   .note-header .container {
     flex-wrap: wrap;
     gap: 8px;
     align-items: center;
+    padding: 10px 20px; /* ここにpaddingを設定 */
   }
   
   .note-header .logo {
@@ -2124,6 +2260,7 @@ body {
     flex-wrap: wrap;
     gap: 8px;
     align-items: center;
+    padding: 10px 16px; /* paddingを追加 */
   }
   
   .note-header .logo {
