@@ -61,12 +61,13 @@ export async function PUT(request, { params }) {
 
   try {
     const body = await request.json();
-    const { title, content, excerpt, thumbnailUrl, authorId, status } = body;
+    const { title, content, excerpt, thumbnailUrl, authorId, status, tags } = body;
 
     console.log('Request body:', { 
       title: title?.substring(0, 50),
       authorId,
-      status
+      status,
+      tags
     });
 
     if (!title || !content) {
@@ -138,9 +139,34 @@ export async function PUT(request, { params }) {
       }
       
       const result = await client.query(updateQuery, updateParams);
+      const updatedArticle = result.rows[0];
+
+      // タグを更新
+      if (tags !== undefined) {
+        console.log('📌 Updating tags:', tags);
+        
+        // 既存のタグを削除
+        await client.query(
+          'DELETE FROM article_tags WHERE article_id = $1',
+          [article.id]
+        );
+        
+        // 新しいタグを追加
+        if (Array.isArray(tags) && tags.length > 0) {
+          for (const tagId of tags) {
+            await client.query(
+              `INSERT INTO article_tags (article_id, tag_id)
+               VALUES ($1, $2)
+               ON CONFLICT DO NOTHING`,
+              [article.id, tagId]
+            );
+          }
+        }
+        console.log('✅ Tags updated successfully');
+      }
 
       console.log('✅ Article updated successfully');
-      return Response.json({ article: result.rows[0] });
+      return Response.json({ article: updatedArticle });
     } finally {
       client.release();
     }

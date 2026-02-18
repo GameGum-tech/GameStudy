@@ -1,15 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 
+// メインタグのリスト（これ以外は「その他」として扱う）
+const MAIN_TAGS = ['Roblox', 'Roblox Studio', '3DCG', 'Lua', 'レベルデザイン'];
+
 export default function ArticleListPage() {
+  const searchParams = useSearchParams();
+  const activeTag = searchParams.get('tag');
+  
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTag, setActiveTag] = useState(null);
   const [allTags, setAllTags] = useState([]);
 
   useEffect(() => {
@@ -43,9 +49,23 @@ export default function ArticleListPage() {
       article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       article.excerpt.toLowerCase().includes(searchTerm.toLowerCase())
     )
-    .filter(article => 
-      !activeTag || (article.tags && article.tags.some(t => t.id === activeTag))
-    );
+    .filter(article => {
+      // タグフィルタリング
+      if (!activeTag) {
+        // 「すべて」の場合：すべての記事を表示
+        return true;
+      } else if (activeTag === 'その他') {
+        // 「その他」の場合：メインタグが含まれない記事を表示
+        if (!article.tags || article.tags.length === 0) {
+          return true; // タグなし記事
+        }
+        // すべてのタグがメインタグ以外の記事
+        return !article.tags.some(t => MAIN_TAGS.includes(t.name));
+      } else {
+        // 特定のタグが選択されている場合
+        return article.tags && article.tags.some(t => t.name === activeTag);
+      }
+    });
 
   return (
     <div className="note-style-page">
@@ -63,9 +83,17 @@ export default function ArticleListPage() {
           </aside>
 
           <div className="content-area">
-            <h2 className="section-title">今日の注目記事</h2>
+            <h2 className="section-title">
+              {activeTag ? `${activeTag} の記事` : '今日の注目記事'}
+            </h2>
             {loading && <div className="loading">読み込み中...</div>}
             {error && <div className="error">エラー: {error}</div>}
+            
+            {!loading && filteredArticles.length === 0 && (
+              <div className="no-articles">
+                <p>記事が見つかりませんでした。</p>
+              </div>
+            )}
             
             <div className="articles-grid-note">
               {filteredArticles.map(article => (
@@ -86,6 +114,18 @@ export default function ArticleListPage() {
                     </div>
                     <div className="card-content">
                       <h3>{article.title}</h3>
+                      {article.tags && article.tags.length > 0 && (
+                        <div className="article-tags">
+                          {article.tags.map(tag => (
+                            <span 
+                              key={tag.id} 
+                              className="article-tag"
+                            >
+                              #{tag.name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                       <div className="card-meta">
                         <Image
                           src={article.avatar_url || '/default-avatar.png'}

@@ -86,8 +86,11 @@ ON CONFLICT (username) DO NOTHING;
 -- サンプルタグの作成
 INSERT INTO tags (name, color) VALUES 
 ('Roblox', '#FF6B35'),
-('ゲーム開発', '#5271ff'),
+('Roblox Studio', '#00A2FF'),
+('3DCG', '#8E44AD'),
 ('Lua', '#000080'),
+('レベルデザイン', '#16A085'),
+('ゲーム開発', '#5271ff'),
 ('初心者', '#28a745'),
 ('チュートリアル', '#17a2b8'),
 ('Unity', '#000000'),

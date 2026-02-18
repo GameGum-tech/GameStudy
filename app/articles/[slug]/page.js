@@ -346,31 +346,28 @@ export default function EnhancedArticleDetailPage({ params }) {
               </div>
               <span className="publish-date">公開日: {formatDate(article.created_at)}</span>
             </div>
+            <div className="tags">
+              {article.tags?.map((tag) => (
+                <Link href={`/?tag=${tag.name}`} key={tag.id}>
+                  <span className="article-tag">
+                    #{tag.name}
+                  </span>
+                </Link>
+              ))}
+            </div>
+            {isAuthor && (
+              <button
+                onClick={() => router.push(`/articles/${article.slug}/edit`)}
+                className="edit-button"
+              >
+                記事を編集
+              </button>
+            )}
           </div>
         </div>
 
         <div className="article-body">
           <CustomMarkdownRenderer content={article.content} />
-        </div>
-
-        <div className="article-footer">
-          <div className="tags">
-            {article.tags?.map((tag) => (
-              <Link href={`/?tag=${tag.name}`} key={tag.id}>
-                <span className="tag" style={{ backgroundColor: tag.color }}>
-                  #{tag.name}
-                </span>
-              </Link>
-            ))}
-          </div>
-          {isAuthor && (
-            <button
-              onClick={() => router.push(`/articles/${article.slug}/edit`)}
-              className="edit-button"
-            >
-              記事を編集
-            </button>
-          )}
         </div>
       </main>
 
