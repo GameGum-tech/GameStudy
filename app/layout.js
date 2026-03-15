@@ -2,6 +2,7 @@ import "./enhanced-globals.css";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Providers from "./components/Providers";
+import Script from 'next/script';
 
 export const metadata = {
   title: {
@@ -66,6 +67,30 @@ export default function RootLayout({ children }) {
     <html lang="ja" suppressHydrationWarning>
       <head>
         <link rel="icon" type="image/png" href="/favicon.png" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const savedTheme = localStorage.getItem('theme');
+                  if (savedTheme) {
+                    document.documentElement.setAttribute('data-theme', savedTheme);
+                  } else {
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    const theme = prefersDark ? 'dark' : 'light';
+                    document.documentElement.setAttribute('data-theme', theme);
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+        <Script
+          async
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_ID}`}
+          crossOrigin="anonymous"
+          strategy="lazyOnload"
+        />
       </head>
       <body>
         <Providers>
