@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
@@ -22,8 +22,13 @@ export default function EditArticlePage({ params }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadedImagePaths, setUploadedImagePaths] = useState([]);
   const [isAuthor, setIsAuthor] = useState(false);
   const [userRegistered, setUserRegistered] = useState(false);
+  const editorRef = useRef(null);
+  const imageInputRef = useRef(null);
+  const cursorPositionRef = useRef(null);
 
   const router = useRouter();
   const slug = resolvedParams.slug;
@@ -174,6 +179,7 @@ export default function EditArticlePage({ params }) {
         thumbnailUrl: thumbnailUrl,
         authorId: user.id,  // 作成者IDを送信（UUID）
         tags: selectedTags.map(t => t.id), // タグIDの配列を送信
+        uploadedImagePaths,
       };
       
       // statusが指定されている場合のみ追加
@@ -290,6 +296,80 @@ export default function EditArticlePage({ params }) {
 
   const removeTag = (tagId) => {
     setSelectedTags(selectedTags.filter(t => t.id !== tagId));
+  };
+
+  const updateCursorPosition = () => {
+    if (!editorRef.current) return;
+    cursorPositionRef.current = editorRef.current.selectionStart;
+  };
+
+  const insertMarkdownImage = (markdown) => {
+    const textarea = editorRef.current;
+
+    if (!textarea || document.activeElement !== textarea || cursorPositionRef.current === null) {
+      setContent((prev) => `${prev}${prev.endsWith('\n') || prev.length === 0 ? '' : '\n'}${markdown}\n`);
+      return;
+    }
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const imageLine = `\n${markdown}\n`;
+    const nextContent = `${content.slice(0, start)}${imageLine}${content.slice(end)}`;
+    const nextCursor = start + imageLine.length;
+
+    setContent(nextContent);
+
+    requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(nextCursor, nextCursor);
+      cursorPositionRef.current = nextCursor;
+    });
+  };
+
+  const handleOpenImagePicker = () => {
+    imageInputRef.current?.click();
+  };
+
+  const handleImageSelected = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!user?.id) {
+      setError('画像アップロードにはログインが必要です。');
+      e.target.value = '';
+      return;
+    }
+
+    setIsUploadingImage(true);
+    setError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('userId', user.id);
+
+      const res = await fetch('/api/images/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || '画像のアップロードに失敗しました。');
+      }
+
+      if (data.path) {
+        setUploadedImagePaths((prev) => (prev.includes(data.path) ? prev : [...prev, data.path]));
+      }
+
+      insertMarkdownImage(data.markdown || `![](${data.url})`);
+    } catch (err) {
+      console.error('画像挿入エラー:', err);
+      setError(err.message || '画像のアップロードに失敗しました。');
+    } finally {
+      setIsUploadingImage(false);
+      e.target.value = '';
+    }
   };
 
   const filteredSuggestions = availableTags.filter(tag => {
@@ -458,10 +538,30 @@ export default function EditArticlePage({ params }) {
         <div className="editor-pane">
           <div className="editor-toolbar">
             <span>マークダウン編集</span>
+            <button
+              type="button"
+              className="image-insert-button"
+              onClick={handleOpenImagePicker}
+              disabled={isUploadingImage || isSaving}
+              title="画像を挿入"
+            >
+              {isUploadingImage ? 'アップロード中...' : '🖼️ 画像'}
+            </button>
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              className="image-upload-input"
+              onChange={handleImageSelected}
+            />
           </div>
           <textarea
+            ref={editorRef}
             value={content}
             onChange={(e) => setContent(e.target.value)}
+            onClick={updateCursorPosition}
+            onKeyUp={updateCursorPosition}
+            onSelect={updateCursorPosition}
             className="markdown-editor"
             placeholder="マークダウンで記事を記述..."
           />

@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -19,7 +18,12 @@ export default function NewArticlePage() {
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const [error, setError] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadedImagePaths, setUploadedImagePaths] = useState([]);
   const [userRegistered, setUserRegistered] = useState(false);
+  const editorRef = useRef(null);
+  const imageInputRef = useRef(null);
+  const cursorPositionRef = useRef(null);
   const router = useRouter();
   const { isSupabaseEnabled } = useAuth();
 
@@ -138,6 +142,7 @@ export default function NewArticlePage() {
           authorId: user.id,
           status: status, // 'draft' または 'published'
           tags: selectedTags.map(t => t.id), // タグIDの配列を送信
+          uploadedImagePaths,
         }),
       });
 
@@ -249,6 +254,80 @@ export default function NewArticlePage() {
     setSelectedTags(selectedTags.filter(t => t.id !== tagId));
   };
 
+  const updateCursorPosition = () => {
+    if (!editorRef.current) return;
+    cursorPositionRef.current = editorRef.current.selectionStart;
+  };
+
+  const insertMarkdownImage = (markdown) => {
+    const textarea = editorRef.current;
+
+    if (!textarea || document.activeElement !== textarea || cursorPositionRef.current === null) {
+      setContent((prev) => `${prev}${prev.endsWith('\n') || prev.length === 0 ? '' : '\n'}${markdown}\n`);
+      return;
+    }
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const imageLine = `\n${markdown}\n`;
+    const nextContent = `${content.slice(0, start)}${imageLine}${content.slice(end)}`;
+    const nextCursor = start + imageLine.length;
+
+    setContent(nextContent);
+
+    requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(nextCursor, nextCursor);
+      cursorPositionRef.current = nextCursor;
+    });
+  };
+
+  const handleOpenImagePicker = () => {
+    imageInputRef.current?.click();
+  };
+
+  const handleImageSelected = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!user?.id) {
+      setError('画像アップロードにはログインが必要です。');
+      e.target.value = '';
+      return;
+    }
+
+    setIsUploadingImage(true);
+    setError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('userId', user.id);
+
+      const res = await fetch('/api/images/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || '画像のアップロードに失敗しました。');
+      }
+
+      if (data.path) {
+        setUploadedImagePaths((prev) => (prev.includes(data.path) ? prev : [...prev, data.path]));
+      }
+
+      insertMarkdownImage(data.markdown || `![](${data.url})`);
+    } catch (err) {
+      console.error('画像挿入エラー:', err);
+      setError(err.message || '画像のアップロードに失敗しました。');
+    } finally {
+      setIsUploadingImage(false);
+      e.target.value = '';
+    }
+  };
+
   // フィルタリングされた候補タグ
   const filteredSuggestions = availableTags.filter(tag => {
     const query = tagInput.replace(/^#/, '').toLowerCase();
@@ -270,9 +349,6 @@ export default function NewArticlePage() {
           {isDemoMode && (
             <span className="demo-badge-inline">🎭 デモ</span>
           )}
-          <Link href="/mypage" className="back-link">
-            ← マイページに戻る
-          </Link>
           <input 
             type="text"
             value={title}
@@ -311,8 +387,6 @@ export default function NewArticlePage() {
         
         {/* タグ選択UI */}
         <div className="tag-selection-area-new">
-          <label className="tag-input-label">🏷️ タグを追加（最大5つ） - 「#」で候補を表示</label>
-          
           <div className="tag-input-wrapper">
             {/* 選択済みタグ */}
             {selectedTags.map(tag => (
@@ -339,7 +413,7 @@ export default function NewArticlePage() {
               onKeyDown={handleTagInputKeyDown}
               onFocus={() => { if (tagInput.startsWith('#')) setShowTagSuggestions(true); }}
               onBlur={() => setTimeout(() => setShowTagSuggestions(false), 200)}
-              placeholder={selectedTags.length === 0 ? "#タグ名を入力..." : ""}
+              placeholder={selectedTags.length === 0 ? "#タグ名を入力（最大5つ・「#」で候補を表示）" : ""}
               className="tag-text-input"
               disabled={selectedTags.length >= 5}
             />
@@ -379,10 +453,30 @@ export default function NewArticlePage() {
         <div className="editor-pane">
           <div className="editor-toolbar">
             <span>マークダウン編集</span>
+            <button
+              type="button"
+              className="image-insert-button"
+              onClick={handleOpenImagePicker}
+              disabled={isUploadingImage || isSaving}
+              title="画像を挿入"
+            >
+              {isUploadingImage ? 'アップロード中...' : '🖼️ 画像'}
+            </button>
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              className="image-upload-input"
+              onChange={handleImageSelected}
+            />
           </div>
           <textarea
+            ref={editorRef}
             value={content}
             onChange={(e) => setContent(e.target.value)}
+            onClick={updateCursorPosition}
+            onKeyUp={updateCursorPosition}
+            onSelect={updateCursorPosition}
             className="markdown-editor"
             placeholder="マークダウンで記事を記述...
 
