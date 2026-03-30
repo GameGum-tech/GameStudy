@@ -1,7 +1,39 @@
 import { pool } from "../../../lib/db";
+import { ARTICLE_IMAGES_BUCKET, extractStoragePathsFromContent, filterPathsOwnedByUser } from "../../../lib/articleImageUtils";
+import { getSupabaseAdmin } from "../../../lib/supabaseAdmin";
 
 // Vercelでのビルドエラーを防ぐため、動的レンダリングを強制
 export const dynamic = 'force-dynamic';
+
+const cleanupUnusedUploadedImages = async ({ content, uploadedImagePaths, userId }) => {
+  if (!Array.isArray(uploadedImagePaths) || uploadedImagePaths.length === 0 || !userId) {
+    return { deleted: 0, skipped: true };
+  }
+
+  const supabaseAdmin = getSupabaseAdmin();
+  if (!supabaseAdmin) {
+    return { deleted: 0, skipped: true };
+  }
+
+  const usedPaths = new Set(filterPathsOwnedByUser(extractStoragePathsFromContent(content), userId));
+  const uploadedOwnedPaths = filterPathsOwnedByUser(uploadedImagePaths, userId);
+  const deleteTargets = uploadedOwnedPaths.filter((path) => !usedPaths.has(path));
+
+  if (deleteTargets.length === 0) {
+    return { deleted: 0, skipped: false };
+  }
+
+  const { error } = await supabaseAdmin.storage
+    .from(ARTICLE_IMAGES_BUCKET)
+    .remove(deleteTargets);
+
+  if (error) {
+    console.error('未使用画像の削除失敗:', error);
+    return { deleted: 0, skipped: false, warning: '一部画像の削除に失敗しました。' };
+  }
+
+  return { deleted: deleteTargets.length, skipped: false };
+};
 
 export async function GET() {
   console.log('📄 GET /api/articles called');
@@ -90,7 +122,7 @@ export async function POST(request) {
       tags: body.tags
     });
 
-    const { title, content, excerpt, thumbnailUrl, slug, authorId, status, tags } = body;
+    const { title, content, excerpt, thumbnailUrl, slug, authorId, status, tags, uploadedImagePaths } = body;
 
     if (!title || !content || !slug) {
       console.error('❌ Validation error: missing required fields');
@@ -197,7 +229,17 @@ export async function POST(request) {
         console.log('✅ Tags saved successfully');
       }
 
-      return Response.json({ article: createdArticle }, { status: 201 });
+      let imageCleanup = { deleted: 0, skipped: true };
+
+      if (articleStatus === 'published') {
+        imageCleanup = await cleanupUnusedUploadedImages({
+          content,
+          uploadedImagePaths,
+          userId: authorId,
+        });
+      }
+
+      return Response.json({ article: createdArticle, imageCleanup }, { status: 201 });
     } catch (error) {
       console.error("❌ 記事作成エラー:", error);
       console.error("Error details:", {

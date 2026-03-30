@@ -28,10 +28,109 @@ cp .env.local.example .env.local
 # Supabase設定（あなたのプロジェクトの値に置き換えてください）
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+SUPABASE_ARTICLE_IMAGES_BUCKET=article-images
 
 # データベース接続（Docker環境）
 DATABASE_URL=postgresql://user:password@db:5432/gamestudy
 ```
+
+### 2.1 画像アップロード機能を使うための追加設定（必須）
+
+記事編集画面の画像挿入ボタンを使う場合は、Supabase Storageのバケット作成とアクセスルール設定が必要です。
+
+#### A. バケット作成
+
+1. Supabaseダッシュボード → **Storage** → **Create bucket**
+2. Bucket Name: `article-images`（または任意名）
+3. **Public bucket** を有効化（公開記事で画像URLをそのまま使えるようにするため）
+4. 作成後、必要に応じて `.env.local` の `SUPABASE_ARTICLE_IMAGES_BUCKET` と同じ名前に統一
+
+#### B. Service Role Keyの取得
+
+1. Supabaseダッシュボード → **Settings** → **API**
+2. **service_role** キーをコピー
+3. `.env.local` に `SUPABASE_SERVICE_ROLE_KEY` として設定
+
+> 注意: `SUPABASE_SERVICE_ROLE_KEY` はサーバー専用です。クライアントに公開しないでください。
+
+#### C. Storageポリシー（推奨）
+
+公開バケットでも、将来の拡張のためにRLSポリシーを明示しておくと安全です。Supabase SQL Editorで以下を実行してください。
+
+```sql
+-- article-images バケットが未作成なら作成
+insert into storage.buckets (id, name, public)
+values ('article-images', 'article-images', true)
+on conflict (id) do nothing;
+
+-- 全員が画像を参照可能
+create policy "Public read article images"
+on storage.objects
+for select
+to public
+using (bucket_id = 'article-images');
+
+-- ログインユーザーのみアップロード可能
+create policy "Authenticated users can upload article images"
+on storage.objects
+for insert
+to authenticated
+with check (bucket_id = 'article-images');
+
+-- ログインユーザーのみ更新可能（任意）
+create policy "Authenticated users can update article images"
+on storage.objects
+for update
+to authenticated
+using (bucket_id = 'article-images')
+with check (bucket_id = 'article-images');
+
+-- ログインユーザーのみ削除可能（任意）
+create policy "Authenticated users can delete article images"
+on storage.objects
+for delete
+to authenticated
+using (bucket_id = 'article-images');
+```
+
+#### D. Vercelにも同じ環境変数を設定
+
+ローカルだけでなくVercelの **Environment Variables** にも以下を追加してください。
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+SUPABASE_ARTICLE_IMAGES_BUCKET=article-images
+DATABASE_URL=postgresql://...pooler.supabase.com:6543/postgres
+```
+
+### 2.2 実装済みの画像挿入フロー
+
+このプロジェクトでは、以下の動作を実装済みです。
+
+1. 記事編集ツールバーの「🖼️ 画像」ボタンでファイル選択
+2. `/api/images/upload` へ送信し、Supabase Storageにアップロード
+3. 公開URLを発行
+4. Markdown形式 `![alt](url)` を自動生成
+5. カーソル位置に挿入
+6. カーソル未フォーカス時は本文末尾に追記
+
+### 2.3 公開時の未使用画像クリーンアップ
+
+公開保存時（新規公開・公開記事更新）に、本文内で参照されていないSupabase画像を自動削除します。
+
+- 新規公開: 今回アップロードした画像のうち、本文に未使用のものを削除
+- 公開記事更新: 以前の本文に存在した画像で、更新後本文にないものを削除
+- 安全対策: ログインユーザーのプレフィックス配下（`{auth.uid()}/...`）の画像のみ削除対象
+
+#### E. 動作確認チェックリスト
+
+1. 記事作成画面で画像ボタンを押して画像を挿入できる
+2. 挿入直後に `![...](https://<project>.supabase.co/storage/v1/object/public/...)` が入る
+3. 画像行を削除して公開すると、該当ファイルがStorageから消える
+4. 公開中の記事で画像を差し替えて更新すると、古い未使用画像が消える
 
 ### 3. Supabaseの認証設定
 
