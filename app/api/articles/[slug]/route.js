@@ -1,7 +1,44 @@
 import { pool } from "../../../../lib/db";
+import { ARTICLE_IMAGES_BUCKET, extractStoragePathsFromContent, filterPathsOwnedByUser } from "../../../../lib/articleImageUtils";
+import { getSupabaseAdmin } from "../../../../lib/supabaseAdmin";
 
 // Vercelでのビルドエラーを防ぐため、動的レンダリングを強制
 export const dynamic = 'force-dynamic';
+
+const cleanupUnusedImagesForPublish = async ({ previousContent, nextContent, uploadedImagePaths, userId }) => {
+  if (!userId) {
+    return { deleted: 0, skipped: true };
+  }
+
+  const supabaseAdmin = getSupabaseAdmin();
+  if (!supabaseAdmin) {
+    return { deleted: 0, skipped: true };
+  }
+
+  const previousOwnedPaths = filterPathsOwnedByUser(extractStoragePathsFromContent(previousContent), userId);
+  const nextOwnedPathSet = new Set(filterPathsOwnedByUser(extractStoragePathsFromContent(nextContent), userId));
+  const removedFromMarkdown = previousOwnedPaths.filter((path) => !nextOwnedPathSet.has(path));
+  const uploadedButUnused = filterPathsOwnedByUser(uploadedImagePaths || [], userId).filter(
+    (path) => !nextOwnedPathSet.has(path)
+  );
+
+  const deleteTargets = [...new Set([...removedFromMarkdown, ...uploadedButUnused])];
+
+  if (deleteTargets.length === 0) {
+    return { deleted: 0, skipped: false };
+  }
+
+  const { error } = await supabaseAdmin.storage
+    .from(ARTICLE_IMAGES_BUCKET)
+    .remove(deleteTargets);
+
+  if (error) {
+    console.error('未使用画像の削除失敗:', error);
+    return { deleted: 0, skipped: false, warning: '一部画像の削除に失敗しました。' };
+  }
+
+  return { deleted: deleteTargets.length, skipped: false };
+};
 
 export async function GET(request, { params }) {
   const resolvedParams = await params;
@@ -61,7 +98,7 @@ export async function PUT(request, { params }) {
 
   try {
     const body = await request.json();
-    const { title, content, excerpt, thumbnailUrl, authorId, status, tags } = body;
+    const { title, content, excerpt, thumbnailUrl, authorId, status, tags, uploadedImagePaths } = body;
 
     console.log('Request body:', { 
       title: title?.substring(0, 50),
@@ -83,7 +120,7 @@ export async function PUT(request, { params }) {
     try {
       // 記事の現在の作成者を確認
       const articleCheck = await client.query(
-        'SELECT a.id, a.author_id, u.auth_uid FROM articles a LEFT JOIN users u ON a.author_id = u.id WHERE a.slug = $1',
+        'SELECT a.id, a.author_id, a.content, a.status, u.auth_uid FROM articles a LEFT JOIN users u ON a.author_id = u.id WHERE a.slug = $1',
         [resolvedParams.slug]
       );
 
@@ -165,8 +202,20 @@ export async function PUT(request, { params }) {
         console.log('✅ Tags updated successfully');
       }
 
+      const finalStatus = articleStatus !== undefined ? articleStatus : (updatedArticle.status || article.status);
+      let imageCleanup = { deleted: 0, skipped: true };
+
+      if (finalStatus === 'published') {
+        imageCleanup = await cleanupUnusedImagesForPublish({
+          previousContent: article.content,
+          nextContent: content,
+          uploadedImagePaths,
+          userId: article.auth_uid,
+        });
+      }
+
       console.log('✅ Article updated successfully');
-      return Response.json({ article: updatedArticle });
+      return Response.json({ article: updatedArticle, imageCleanup });
     } finally {
       client.release();
     }
