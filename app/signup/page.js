@@ -98,7 +98,10 @@ function SignUpContent() {
         <div className="auth-container">
           <div className="auth-card">
             <div className="success-message">
-              <h2>✓ 登録完了</h2>
+              <h2>
+                <span className="material-symbols-outlined" aria-hidden="true">check_circle</span>
+                登録完了
+              </h2>
               <p>アカウントが作成されました。リダイレクトしています...</p>
             </div>
           </div>

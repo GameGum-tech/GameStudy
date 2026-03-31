@@ -59,7 +59,8 @@ export default function TagNavigation() {
           rel="noopener noreferrer"
           className="tag-nav-item external-link"
         >
-          GameJam 🔗
+          GameJam
+          <span className="material-symbols-outlined external-link-icon" aria-hidden="true">open_in_new</span>
         </a>
         <a 
           href="https://gamegum.jp" 
@@ -67,7 +68,8 @@ export default function TagNavigation() {
           rel="noopener noreferrer"
           className="tag-nav-item external-link"
         >
-          運営会社 🔗
+          運営会社
+          <span className="material-symbols-outlined external-link-icon" aria-hidden="true">open_in_new</span>
         </a>
       </nav>
     </div>

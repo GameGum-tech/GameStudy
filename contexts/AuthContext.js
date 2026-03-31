@@ -41,7 +41,7 @@ export function AuthProvider({ children }) {
         avatar_url: supabaseUser.user_metadata?.avatar_url || supabaseUser.user_metadata?.picture,
       };
 
-      console.log('🔄 Ensuring user in database:', userData);
+      console.log('[INFO] Ensuring user in database:', userData);
 
       const response = await fetch('/api/users', {
         method: 'POST',
@@ -51,12 +51,12 @@ export function AuthProvider({ children }) {
 
       if (response.ok) {
         const result = await response.json();
-        console.log('✅ User ensured in database:', result);
+        console.log('[OK] User ensured in database:', result);
       } else {
-        console.error('❌ Failed to ensure user in database:', await response.text());
+        console.error('[ERR] Failed to ensure user in database:', await response.text());
       }
     } catch (error) {
-      console.error('❌ Error ensuring user in database:', error);
+      console.error('[ERR] Error ensuring user in database:', error);
     }
   };
 
@@ -92,7 +92,7 @@ export function AuthProvider({ children }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔐 Auth state changed:', event, session?.user?.id);
+      console.log('[AUTH] Auth state changed:', event, session?.user?.id);
       setUser(session?.user ?? null);
       
       // ログイン時に常にデータベースのユーザーを確認

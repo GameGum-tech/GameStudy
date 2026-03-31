@@ -4,6 +4,7 @@ import { getSupabaseAdmin } from '../../../../lib/supabaseAdmin';
 export const dynamic = 'force-dynamic';
 
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
+const ALLOWED_PURPOSES = ['inline', 'thumbnail'];
 
 const sanitizeFileName = (name) => {
   const base = (name || 'image').replace(/\.[^/.]+$/, '');
@@ -37,6 +38,10 @@ export async function POST(request) {
     const formData = await request.formData();
     const file = formData.get('file');
     const userId = formData.get('userId');
+    const purposeInput = formData.get('purpose');
+    const purpose = typeof purposeInput === 'string' && ALLOWED_PURPOSES.includes(purposeInput)
+      ? purposeInput
+      : 'inline';
 
     if (!file || typeof file === 'string') {
       return Response.json({ error: '画像ファイルを指定してください。' }, { status: 400 });
@@ -58,7 +63,7 @@ export async function POST(request) {
     const buffer = Buffer.from(bytes);
     const ext = extensionFromType(file.type);
     const safeName = sanitizeFileName(file.name);
-    const path = `${userId}/${Date.now()}-${safeName}.${ext}`;
+    const path = `${userId}/${purpose}/${Date.now()}-${safeName}.${ext}`;
 
     const { error: uploadError } = await supabaseAdmin.storage
       .from(ARTICLE_IMAGES_BUCKET)

@@ -30,7 +30,10 @@ function TableOfContents({ content }) {
 
   return (
     <div className="table-of-contents">
-      <h3>📋 目次</h3>
+      <h3>
+        <span className="material-symbols-outlined" aria-hidden="true">toc</span>
+        目次
+      </h3>
       <ul>
         {headings.map((heading) => (
           <li
@@ -100,7 +103,7 @@ export default function EnhancedArticleDetailPage({ params }) {
       }
       
       try {
-        console.log('🔄 記事詳細ページ: ユーザー登録を確認中...', user.id);
+        console.log('[INFO] 記事詳細ページ: ユーザー登録を確認中...', user.id);
         
         const userData = {
           auth_uid: user.id,
@@ -118,14 +121,14 @@ export default function EnhancedArticleDetailPage({ params }) {
 
         if (response.ok) {
           const result = await response.json();
-          console.log('✅ ユーザー登録確認完了:', result);
+          console.log('[OK] ユーザー登録確認完了:', result);
           setUserRegistered(true);
         } else {
-          console.error('❌ ユーザー登録失敗');
+          console.error('[ERR] ユーザー登録失敗');
           setUserRegistered(true); // エラーでも続行
         }
       } catch (error) {
-        console.error('❌ ユーザー登録エラー:', error);
+        console.error('[ERR] ユーザー登録エラー:', error);
         setUserRegistered(true); // エラーでも続行
       }
     };
@@ -203,7 +206,7 @@ export default function EnhancedArticleDetailPage({ params }) {
 
       // 404の場合、ログインユーザーであれば下書きも含めて再取得
       if (!res.ok && res.status === 404 && user) {
-        console.log('🔍 記事が見つからないため、下書きも含めて再検索します');
+        console.log('[SEARCH] 記事が見つからないため、下書きも含めて再検索します');
         res = await fetch(`/api/articles/${resolvedParams.slug}?includeDrafts=true`);
         data = await res.json();
       }
@@ -216,7 +219,7 @@ export default function EnhancedArticleDetailPage({ params }) {
       
       // 下書き記事の場合、作成者確認が完了するまで表示を保留
       if (articleData.status === 'draft') {
-        console.log('📝 下書き記事が見つかりました。作成者確認が必要です。');
+        console.log('[NOTE] 下書き記事が見つかりました。作成者確認が必要です。');
         // 一旦記事をセットして、後で作成者チェックで判定
         setArticle(articleData);
         setLikesCount(articleData.likes_count);
@@ -297,14 +300,14 @@ export default function EnhancedArticleDetailPage({ params }) {
       <aside className="left-sidebar">
         <div className="action-buttons">
           <button onClick={handleLike} className={`action-btn like-btn ${liked ? 'active' : ''}`}>
-            <span className="icon">♡</span>
+            <span className="icon material-symbols-outlined" aria-hidden="true">favorite</span>
             <span className="count">{likesCount}</span>
           </button>
           <button onClick={handleBookmark} className={`action-btn bookmark-btn ${bookmarked ? 'active' : ''}`}>
-            <span className="icon">🔖</span>
+            <span className="icon material-symbols-outlined" aria-hidden="true">bookmark</span>
           </button>
           <button onClick={handleShare} className="action-btn share-btn">
-            <span className="icon">🔗</span>
+            <span className="icon material-symbols-outlined" aria-hidden="true">share</span>
           </button>
         </div>
       </aside>
@@ -323,14 +326,17 @@ export default function EnhancedArticleDetailPage({ params }) {
                 style={{ objectFit: 'cover' }}
               />
             ) : (
-              <div className="default-thumbnail">📄</div>
+              <div className="default-thumbnail">
+                <span className="material-symbols-outlined" aria-hidden="true">article</span>
+              </div>
             )}
           </div>
           <div className="article-header-content">
             <h1>{article.title}</h1>
             {article.status === 'draft' && (
               <div className="article-draft-badge">
-                📝 下書き（作成者のみ表示中）
+                <span className="material-symbols-outlined" aria-hidden="true">draft</span>
+                下書き（作成者のみ表示中）
               </div>
             )}
             <div className="article-meta-top">

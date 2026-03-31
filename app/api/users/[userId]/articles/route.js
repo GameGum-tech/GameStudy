@@ -7,7 +7,7 @@ export async function GET(request, { params }) {
   const resolvedParams = await params;
   const userId = resolvedParams.userId;
   
-  console.log('📄 GET /api/users/[userId]/articles called:', userId);
+  console.log('[DOC] GET /api/users/[userId]/articles called:', userId);
 
   try {
     const client = await pool.connect();
@@ -19,7 +19,7 @@ export async function GET(request, { params }) {
 
       if (uuidRegex.test(userId)) {
         // UUIDの場合: auth_uidで検索
-        console.log('🔍 Searching articles by auth_uid (UUID)');
+        console.log('[SEARCH] Searching articles by auth_uid (UUID)');
         const result = await client.query(`
           SELECT 
             a.id, a.title, a.slug, a.excerpt, a.thumbnail_url, 
@@ -39,7 +39,7 @@ export async function GET(request, { params }) {
         articles = result.rows;
       } else {
         // INTEGERの場合: author_idで検索
-        console.log('🔍 Searching articles by author_id (INTEGER)');
+        console.log('[SEARCH] Searching articles by author_id (INTEGER)');
         const result = await client.query(`
           SELECT 
             a.id, a.title, a.slug, a.excerpt, a.thumbnail_url, 
@@ -59,13 +59,13 @@ export async function GET(request, { params }) {
         articles = result.rows;
       }
 
-      console.log('✅ Found articles:', articles.length);
+      console.log('[OK] Found articles:', articles.length);
       return Response.json({ articles });
     } finally {
       client.release();
     }
   } catch (error) {
-    console.error("❌ ユーザー記事取得エラー:", error);
+    console.error("[ERR] ユーザー記事取得エラー:", error);
     return Response.json(
       { error: "記事の取得に失敗しました" },
       { status: 500 }

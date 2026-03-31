@@ -24,7 +24,7 @@ export async function GET() {
       client.release();
     }
   } catch (error) {
-    console.error("❌ タグ取得エラー:", error);
+    console.error("[ERR] タグ取得エラー:", error);
     return Response.json(
       { error: "タグの取得に失敗しました" },
       { status: 500 }
@@ -70,7 +70,7 @@ export async function POST(request) {
       client.release();
     }
   } catch (error) {
-    console.error("❌ タグ作成エラー:", error);
+    console.error("[ERR] タグ作成エラー:", error);
     return Response.json(
       { error: "タグの作成に失敗しました" },
       { status: 500 }

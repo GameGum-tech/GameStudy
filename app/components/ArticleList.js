@@ -107,7 +107,9 @@ export default function ArticleList() {
                           style={{ objectFit: 'cover' }}
                         />
                       ) : (
-                        <div className="default-card-thumbnail">📄</div>
+                        <div className="default-card-thumbnail">
+                          <span className="material-symbols-outlined" aria-hidden="true">article</span>
+                        </div>
                       )}
                     </div>
                     <div className="card-content">
