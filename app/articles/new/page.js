@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useAuth } from '../../../contexts/AuthContext';
+import { uploadCompressedImage } from '../../../lib/client/imageUpload';
 import '../../articles/[slug]/edit/edit.css';
 
 export default function NewArticlePage() {
@@ -19,10 +20,12 @@ export default function NewArticlePage() {
   const [error, setError] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   const [uploadedImagePaths, setUploadedImagePaths] = useState([]);
   const [userRegistered, setUserRegistered] = useState(false);
   const editorRef = useRef(null);
   const imageInputRef = useRef(null);
+  const thumbnailInputRef = useRef(null);
   const cursorPositionRef = useRef(null);
   const router = useRouter();
   const { isSupabaseEnabled } = useAuth();
@@ -50,7 +53,7 @@ export default function NewArticlePage() {
       if (!user || isDemoMode) return;
       
       try {
-        console.log('🔄 記事作成ページ: ユーザー登録を確認中...', user.id);
+        console.log('[INFO] 記事作成ページ: ユーザー登録を確認中...', user.id);
         
         const userData = {
           auth_uid: user.id,
@@ -68,15 +71,15 @@ export default function NewArticlePage() {
 
         if (response.ok) {
           const result = await response.json();
-          console.log('✅ ユーザー登録確認完了:', result);
+          console.log('[OK] ユーザー登録確認完了:', result);
           setUserRegistered(true);
         } else {
           const errorData = await response.json();
-          console.error('❌ ユーザー登録失敗:', errorData);
+          console.error('[ERR] ユーザー登録失敗:', errorData);
           setError('ユーザー情報の登録に失敗しました。ページをリロードしてください。');
         }
       } catch (error) {
-        console.error('❌ ユーザー登録エラー:', error);
+        console.error('[ERR] ユーザー登録エラー:', error);
         setError('ユーザー情報の登録に失敗しました。');
       }
     };
@@ -128,7 +131,7 @@ export default function NewArticlePage() {
         .replace(/^-+|-+$/g, '')
         .substring(0, 100) + '-' + Date.now();
 
-      console.log('📝 Creating article with status:', status);
+      console.log('[NOTE] Creating article with status:', status);
 
       const res = await fetch('/api/articles', {
         method: 'POST',
@@ -286,33 +289,23 @@ export default function NewArticlePage() {
     imageInputRef.current?.click();
   };
 
+  const handleOpenThumbnailPicker = () => {
+    thumbnailInputRef.current?.click();
+  };
+
   const handleImageSelected = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    if (!user?.id) {
-      setError('画像アップロードにはログインが必要です。');
-      e.target.value = '';
-      return;
-    }
 
     setIsUploadingImage(true);
     setError(null);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('userId', user.id);
-
-      const res = await fetch('/api/images/upload', {
-        method: 'POST',
-        body: formData,
+      const data = await uploadCompressedImage({
+        file,
+        userId: user?.id,
+        purpose: 'inline',
       });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || '画像のアップロードに失敗しました。');
-      }
 
       if (data.path) {
         setUploadedImagePaths((prev) => (prev.includes(data.path) ? prev : [...prev, data.path]));
@@ -324,6 +317,30 @@ export default function NewArticlePage() {
       setError(err.message || '画像のアップロードに失敗しました。');
     } finally {
       setIsUploadingImage(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleThumbnailSelected = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingThumbnail(true);
+    setError(null);
+
+    try {
+      const data = await uploadCompressedImage({
+        file,
+        userId: user?.id,
+        purpose: 'thumbnail',
+      });
+
+      setThumbnailUrl(data.url || '');
+    } catch (err) {
+      console.error('サムネイルアップロードエラー:', err);
+      setError(err.message || 'サムネイルのアップロードに失敗しました。');
+    } finally {
+      setIsUploadingThumbnail(false);
       e.target.value = '';
     }
   };
@@ -347,7 +364,10 @@ export default function NewArticlePage() {
       <header className="edit-header">
         <div className="edit-header-left">
           {isDemoMode && (
-            <span className="demo-badge-inline">🎭 デモ</span>
+            <span className="demo-badge-inline">
+              <span className="material-symbols-outlined" aria-hidden="true">theater_comedy</span>
+              デモ
+            </span>
           )}
           <input 
             type="text"
@@ -364,26 +384,52 @@ export default function NewArticlePage() {
             className="draft-button"
             disabled={isSaving}
           >
-            {isSaving ? '保存中...' : '📝 下書き保存'}
+            <span className="material-symbols-outlined button-leading-icon" aria-hidden="true">draft</span>
+            {isSaving ? '保存中...' : '下書き保存'}
           </button>
           <button 
             onClick={() => handleSave('published')} 
             className="save-button"
             disabled={isSaving}
           >
-            {isSaving ? '公開中...' : '🚀 公開する'}
+            <span className="material-symbols-outlined button-leading-icon" aria-hidden="true">rocket_launch</span>
+            {isSaving ? '公開中...' : '公開する'}
           </button>
         </div>
       </header>
 
       <div className="edit-metadata">
-        <input 
-          type="text"
-          value={thumbnailUrl}
-          onChange={(e) => setThumbnailUrl(e.target.value)}
-          className="thumbnail-input"
-          placeholder="サムネイル画像のURL（オプション）"
-        />
+        <div className="thumbnail-row">
+          <input 
+            type="text"
+            value={thumbnailUrl}
+            onChange={(e) => setThumbnailUrl(e.target.value)}
+            className="thumbnail-input"
+            placeholder="サムネイル画像のURL（オプション）"
+          />
+          <button
+            type="button"
+            className="thumbnail-upload-button"
+            onClick={handleOpenThumbnailPicker}
+            disabled={isUploadingThumbnail || isSaving}
+            title="サムネイル画像を選択"
+          >
+            <span className="material-symbols-outlined" aria-hidden="true">image</span>
+            {isUploadingThumbnail ? '圧縮中...' : 'サムネイル設定'}
+          </button>
+          <input
+            ref={thumbnailInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="image-upload-input"
+            onChange={handleThumbnailSelected}
+          />
+        </div>
+        {thumbnailUrl && (
+          <div className="thumbnail-preview-wrapper">
+            <img src={thumbnailUrl} alt="サムネイルプレビュー" className="thumbnail-preview-image" />
+          </div>
+        )}
         
         {/* タグ選択UI */}
         <div className="tag-selection-area-new">
@@ -459,13 +505,16 @@ export default function NewArticlePage() {
               onClick={handleOpenImagePicker}
               disabled={isUploadingImage || isSaving}
               title="画像を挿入"
+              aria-label="画像を挿入"
             >
-              {isUploadingImage ? 'アップロード中...' : '🖼️ 画像'}
+              <span className="material-symbols-outlined" aria-hidden="true">
+                {isUploadingImage ? 'hourglass_top' : 'image'}
+              </span>
             </button>
             <input
               ref={imageInputRef}
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp"
               className="image-upload-input"
               onChange={handleImageSelected}
             />

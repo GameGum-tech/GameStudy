@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(request, { params }) {
   const resolvedParams = await params;
   
-  console.log('📄 POST /api/articles/[slug]/like called:', resolvedParams.slug);
+  console.log('[DOC] POST /api/articles/[slug]/like called:', resolvedParams.slug);
 
   try {
     const { userId } = await request.json();
@@ -87,7 +87,7 @@ export async function POST(request, { params }) {
       client.release();
     }
   } catch (error) {
-    console.error("❌ いいね処理エラー:", error);
+    console.error("[ERR] いいね処理エラー:", error);
     return Response.json(
       { error: "いいね処理に失敗しました" },
       { status: 500 }

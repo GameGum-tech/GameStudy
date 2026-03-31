@@ -36,7 +36,7 @@ function MyPageContent() {
       }
       
       try {
-        console.log('🔄 マイページ: ユーザー登録を確認中...', user.id);
+        console.log('[INFO] マイページ: ユーザー登録を確認中...', user.id);
         
         const userData = {
           auth_uid: user.id,
@@ -54,14 +54,14 @@ function MyPageContent() {
 
         if (response.ok) {
           const result = await response.json();
-          console.log('✅ ユーザー登録確認完了:', result);
+          console.log('[OK] ユーザー登録確認完了:', result);
           setUserRegistered(true);
         } else {
           const errorData = await response.json();
-          console.error('❌ ユーザー登録失敗:', errorData);
+          console.error('[ERR] ユーザー登録失敗:', errorData);
         }
       } catch (error) {
-        console.error('❌ ユーザー登録エラー:', error);
+        console.error('[ERR] ユーザー登録エラー:', error);
       }
     };
 
@@ -137,7 +137,8 @@ function MyPageContent() {
           <div className="profile-card">
             {isDemoMode && (
               <div className="demo-badge">
-                🎭 デモモード
+                <span className="material-symbols-outlined" aria-hidden="true">theater_comedy</span>
+                デモモード
               </div>
             )}
             <Image
@@ -174,9 +175,13 @@ function MyPageContent() {
         {/* 記事管理セクション */}
         <div className="articles-section">
           <div className="section-header">
-            <h2>📝 あなたの記事</h2>
+            <h2>
+              <span className="material-symbols-outlined" aria-hidden="true">article</span>
+              あなたの記事
+            </h2>
             <Link href="/articles/new" className="new-article-btn">
-              ✏️ 新しい記事を書く
+              <span className="material-symbols-outlined" aria-hidden="true">edit_square</span>
+              新しい記事を書く
             </Link>
           </div>
 
@@ -186,13 +191,15 @@ function MyPageContent() {
               className={`tab ${activeTab === 'published' ? 'active' : ''}`}
               onClick={() => setActiveTab('published')}
             >
-              🚀 公開済み ({articles.filter(a => a.status === 'published' || !a.status).length})
+              <span className="material-symbols-outlined" aria-hidden="true">rocket_launch</span>
+              公開済み ({articles.filter(a => a.status === 'published' || !a.status).length})
             </button>
             <button 
               className={`tab ${activeTab === 'drafts' ? 'active' : ''}`}
               onClick={() => setActiveTab('drafts')}
             >
-              📝 下書き ({articles.filter(a => a.status === 'draft').length})
+              <span className="material-symbols-outlined" aria-hidden="true">draft</span>
+              下書き ({articles.filter(a => a.status === 'draft').length})
             </button>
           </div>
 
@@ -217,7 +224,10 @@ function MyPageContent() {
                 .filter(a => activeTab === 'drafts' ? a.status === 'draft' : (a.status === 'published' || !a.status))
                 .map((article) => (
                 <div key={article.id} className="mypage-article-card">{article.status === 'draft' && (
-                    <span className="draft-badge">📝 下書き</span>
+                    <span className="draft-badge">
+                      <span className="material-symbols-outlined" aria-hidden="true">draft</span>
+                      下書き
+                    </span>
                   )}
                   {article.thumbnail_url && (
                     <div className="mypage-thumbnail">

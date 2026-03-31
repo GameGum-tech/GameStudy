@@ -36,16 +36,16 @@ const cleanupUnusedUploadedImages = async ({ content, uploadedImagePaths, userId
 };
 
 export async function GET() {
-  console.log('📄 GET /api/articles called');
+  console.log('[DOC] GET /api/articles called');
   console.log('Environment check:', {
     NODE_ENV: process.env.NODE_ENV,
     DATABASE_URL_exists: !!process.env.DATABASE_URL,
   });
 
   try {
-    console.log('🔌 Attempting to connect to database...');
+    console.log('[DB] Attempting to connect to database...');
     const client = await pool.connect();
-    console.log('✅ Database connection successful');
+    console.log('[OK] Database connection successful');
 
     try {
       const result = await client.query(`
@@ -64,10 +64,10 @@ export async function GET() {
         GROUP BY a.id, u.username, u.display_name, u.avatar_url
         ORDER BY a.updated_at DESC
       `);
-      console.log('✅ Query successful, rows:', result.rows.length);
+      console.log('[OK] Query successful, rows:', result.rows.length);
       return Response.json({ articles: result.rows });
     } catch (error) {
-      console.error("❌ 記事一覧取得エラー:", error);
+      console.error("[ERR] 記事一覧取得エラー:", error);
       console.error("Error details:", {
         message: error.message,
         code: error.code,
@@ -85,7 +85,7 @@ export async function GET() {
       client.release();
     }
   } catch (connectionError) {
-    console.error("❌ データベース接続エラー:", connectionError);
+    console.error("[ERR] データベース接続エラー:", connectionError);
     console.error("Connection error details:", {
       message: connectionError.message,
       code: connectionError.code,
@@ -94,7 +94,7 @@ export async function GET() {
     
     // 環境変数のチェック
     if (!process.env.DATABASE_URL) {
-      console.error('⚠️ DATABASE_URL is not set!');
+      console.error('[WARN] DATABASE_URL is not set!');
       console.error('Available env vars:', Object.keys(process.env).filter(k => k.includes('DATABASE') || k.includes('PG')));
     }
     
@@ -110,7 +110,7 @@ export async function GET() {
 }
 
 export async function POST(request) {
-  console.log('📝 POST /api/articles called');
+  console.log('[NOTE] POST /api/articles called');
 
   try {
     const body = await request.json();
@@ -125,16 +125,16 @@ export async function POST(request) {
     const { title, content, excerpt, thumbnailUrl, slug, authorId, status, tags, uploadedImagePaths } = body;
 
     if (!title || !content || !slug) {
-      console.error('❌ Validation error: missing required fields');
+      console.error('[ERR] Validation error: missing required fields');
       return Response.json(
         { error: "タイトル、本文、スラッグは必須です" },
         { status: 400 }
       );
     }
 
-    console.log('🔌 Attempting to connect to database...');
+    console.log('[DB] Attempting to connect to database...');
     const client = await pool.connect();
-    console.log('✅ Database connection successful');
+    console.log('[OK] Database connection successful');
 
     try {
       // authorIdの処理：UUIDの場合はauth_uidで検索、INTEGERの場合はそのまま使用
@@ -146,7 +146,7 @@ export async function POST(request) {
         
         if (uuidRegex.test(authorId)) {
           // UUIDの場合：auth_uidで検索
-          console.log('🔍 Searching user by auth_uid (UUID):', authorId);
+          console.log('[SEARCH] Searching user by auth_uid (UUID):', authorId);
           const userResult = await client.query(
             'SELECT id FROM users WHERE auth_uid = $1',
             [authorId]
@@ -154,10 +154,10 @@ export async function POST(request) {
           
           if (userResult.rows.length > 0) {
             userId = userResult.rows[0].id;
-            console.log('✅ Found user by auth_uid:', userId);
+            console.log('[OK] Found user by auth_uid:', userId);
           } else {
             // auth_uidが見つからない場合はエラー
-            console.error('❌ User not found with auth_uid:', authorId);
+            console.error('[ERR] User not found with auth_uid:', authorId);
             return Response.json(
               { 
                 error: "ユーザー情報が登録されていません。ページをリロードしてから再度お試しください。",
@@ -170,12 +170,12 @@ export async function POST(request) {
         } else {
           // INTEGERの場合：そのまま使用
           userId = parseInt(authorId, 10);
-          console.log('📊 Using provided user ID (INTEGER):', userId);
+          console.log('[STAT] Using provided user ID (INTEGER):', userId);
         }
       } else {
         // authorIdが未指定の場合：デフォルトユーザー
         userId = 1;
-        console.log('📊 No authorId provided, using default user (id=1)');
+        console.log('[STAT] No authorId provided, using default user (id=1)');
       }
 
       // ユーザーが存在するか確認
@@ -185,14 +185,14 @@ export async function POST(request) {
       );
 
       if (userCheck.rows.length === 0) {
-        console.error('❌ User not found:', userId);
+        console.error('[ERR] User not found:', userId);
         return Response.json(
           { error: "ユーザーが見つかりません。Supabaseでusersテーブルを確認してください。" },
           { status: 404 }
         );
       }
 
-      console.log('📊 Inserting article...');
+      console.log('[STAT] Inserting article...');
       // statusのデフォルト値は'published'、指定されていれば使用（draft or published）
       const articleStatus = status === 'draft' ? 'draft' : 'published';
       
@@ -213,11 +213,11 @@ export async function POST(request) {
       );
 
       const createdArticle = result.rows[0];
-      console.log('✅ Article created successfully:', createdArticle.id, 'status:', articleStatus);
+      console.log('[OK] Article created successfully:', createdArticle.id, 'status:', articleStatus);
 
       // タグを保存
       if (tags && Array.isArray(tags) && tags.length > 0) {
-        console.log('📌 Saving tags:', tags);
+        console.log('[TAG] Saving tags:', tags);
         for (const tagId of tags) {
           await client.query(
             `INSERT INTO article_tags (article_id, tag_id)
@@ -226,7 +226,7 @@ export async function POST(request) {
             [createdArticle.id, tagId]
           );
         }
-        console.log('✅ Tags saved successfully');
+        console.log('[OK] Tags saved successfully');
       }
 
       let imageCleanup = { deleted: 0, skipped: true };
@@ -241,7 +241,7 @@ export async function POST(request) {
 
       return Response.json({ article: createdArticle, imageCleanup }, { status: 201 });
     } catch (error) {
-      console.error("❌ 記事作成エラー:", error);
+      console.error("[ERR] 記事作成エラー:", error);
       console.error("Error details:", {
         message: error.message,
         code: error.code,
@@ -276,7 +276,7 @@ export async function POST(request) {
       client.release();
     }
   } catch (connectionError) {
-    console.error("❌ データベース接続エラー:", connectionError);
+    console.error("[ERR] データベース接続エラー:", connectionError);
     console.error("Connection error details:", {
       message: connectionError.message,
       code: connectionError.code,

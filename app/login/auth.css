@@ -50,9 +50,16 @@
 }
 
 .success-message h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   color: var(--success-color);
   font-size: 2rem;
   margin: 0 0 16px;
+}
+
+.success-message h2 .material-symbols-outlined {
+  font-size: 32px;
 }
 
 .success-message p {

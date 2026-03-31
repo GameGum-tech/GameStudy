@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(request, { params }) {
   const resolvedParams = await params;
   
-  console.log('📄 POST /api/articles/[slug]/bookmark called:', resolvedParams.slug);
+  console.log('[DOC] POST /api/articles/[slug]/bookmark called:', resolvedParams.slug);
 
   try {
     const { userId } = await request.json();
@@ -64,7 +64,7 @@ export async function POST(request, { params }) {
       client.release();
     }
   } catch (error) {
-    console.error("❌ ブックマーク処理エラー:", error);
+    console.error("[ERR] ブックマーク処理エラー:", error);
     return Response.json(
       { error: "ブックマーク処理に失敗しました" },
       { status: 500 }

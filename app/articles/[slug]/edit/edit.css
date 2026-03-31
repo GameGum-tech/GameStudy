@@ -58,11 +58,18 @@
 .demo-badge-inline {
   background-color: var(--warning-bg);
   color: var(--warning-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 4px 12px;
   border-radius: 12px;
   font-size: 0.8rem;
   font-weight: 600;
   white-space: nowrap;
+}
+
+.demo-badge-inline .material-symbols-outlined {
+  font-size: 16px;
 }
 
 .back-link {
@@ -115,6 +122,10 @@
   background-color: var(--primary-color);
   color: white;
   border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   padding: 10px 24px;
   border-radius: 8px;
   cursor: pointer;
@@ -141,6 +152,10 @@
   background-color: var(--bg-tertiary);
   color: var(--text-primary);
   border: 2px solid var(--border-color);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   padding: 10px 24px;
   border-radius: 8px;
   cursor: pointer;
@@ -162,6 +177,11 @@
   color: var(--text-muted);
   cursor: not-allowed;
   transform: none;
+}
+
+.button-leading-icon {
+  font-size: 18px;
+  line-height: 1;
 }
 
 /* メタデータセクション */
@@ -191,6 +211,56 @@
 
 .thumbnail-input::placeholder {
   color: var(--text-muted);
+}
+
+.thumbnail-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.thumbnail-upload-button {
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border-radius: 8px;
+  height: 38px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.thumbnail-upload-button:hover:not(:disabled) {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.thumbnail-upload-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.thumbnail-preview-wrapper {
+  margin-top: 8px;
+  width: 100%;
+  max-width: 360px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: var(--bg-secondary);
+}
+
+.thumbnail-preview-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
 }
 
 /* エディタレイアウト */
@@ -252,6 +322,15 @@
   .edit-metadata {
     padding: 12px 16px;
   }
+
+  .thumbnail-row {
+    flex-wrap: wrap;
+  }
+
+  .thumbnail-upload-button {
+    width: 100%;
+    justify-content: center;
+  }
   
   /* エディター調整 */
   .markdown-editor {
@@ -265,7 +344,8 @@
   
   .editor-toolbar,
   .preview-toolbar {
-    padding: 10px 16px;
+    height: 48px;
+    padding: 0 16px;
     font-size: 0.8rem;
   }
 }
@@ -323,7 +403,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 24px;
+  height: 56px;
+  box-sizing: border-box;
+  padding: 0 24px;
   background-color: var(--code-bg);
   color: var(--code-text);
   font-size: 0.85rem;
@@ -341,21 +423,24 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  border: 1px solid var(--border-dark);
-  border-radius: 6px;
-  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 0;
+  background-color: transparent;
   color: var(--code-text);
-  font-size: 0.8rem;
-  font-weight: 600;
+  width: 40px;
+  height: 40px;
   line-height: 1;
-  padding: 6px 10px;
+  padding: 0;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.image-insert-button .material-symbols-outlined {
+  font-size: 26px;
 }
 
 .image-insert-button:hover:not(:disabled) {
-  background-color: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
   transform: translateY(-1px);
 }
 
@@ -506,11 +591,20 @@
 }
 
 .markdown-preview img {
+  display: block;
+  width: 100%;
   max-width: 100%;
   height: auto;
   border-radius: 8px;
   margin: 24px 0;
   box-shadow: var(--shadow-md);
+}
+
+.markdown-preview li img,
+.markdown-preview blockquote img,
+.markdown-preview li p img,
+.markdown-preview blockquote p img {
+  margin: 14px 0;
 }
 
 .markdown-preview table {
@@ -698,11 +792,17 @@
 }
 
 .tag-input-label {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-weight: 600;
   color: var(--text-primary);
   font-size: 0.95rem;
   margin-bottom: 8px;
+}
+
+.tag-input-label .material-symbols-outlined {
+  font-size: 16px;
 }
 
 .tag-input-wrapper {
