@@ -74,12 +74,15 @@ export default function Header() {
             className="theme-toggle-btn"
             aria-label="テーマ切り替え"
           >
-            {theme === 'light' ? '🌙' : '☀️'}
+            <span className="material-symbols-outlined" aria-hidden="true">
+              {theme === 'light' ? 'dark_mode' : 'light_mode'}
+            </span>
           </button>
           {user ? (
             <>
               <Link href="/articles/new" className="create-btn">
-                ✏️ 記事を書く
+                <span className="material-symbols-outlined" aria-hidden="true">edit_square</span>
+                記事を書く
               </Link>
               <div className="user-menu" ref={dropdownRef}>
                 <button 
@@ -104,19 +107,29 @@ export default function Header() {
                     </div>
                     <div className="dropdown-divider"></div>
                     <Link href="/mypage" className="dropdown-item" onClick={() => setShowDropdown(false)}>
-                      📝 マイページ
+                      <span className="dropdown-item-content">
+                        <span className="material-symbols-outlined" aria-hidden="true">person</span>
+                        マイページ
+                      </span>
                     </Link>
                     <Link href="/articles/new" className="dropdown-item" onClick={() => setShowDropdown(false)}>
-                      ✏️ 記事を書く
+                      <span className="dropdown-item-content">
+                        <span className="material-symbols-outlined" aria-hidden="true">edit_square</span>
+                        記事を書く
+                      </span>
                     </Link>
                     <div className="dropdown-divider"></div>
                     {isDemoMode && (
                       <div className="dropdown-demo-badge">
-                        🎭 デモモード
+                        <span className="material-symbols-outlined" aria-hidden="true">theater_comedy</span>
+                        デモモード
                       </div>
                     )}
                     <button className="dropdown-item" onClick={handleSignOut}>
-                      🚪 ログアウト
+                      <span className="dropdown-item-content">
+                        <span className="material-symbols-outlined" aria-hidden="true">logout</span>
+                        ログアウト
+                      </span>
                     </button>
                   </div>
                 )}
@@ -126,7 +139,8 @@ export default function Header() {
             <>
               {!isSupabaseEnabled && (
                 <button onClick={handleDemoLogin} className="demo-login-btn">
-                  🎭 デモモードでログイン
+                  <span className="material-symbols-outlined" aria-hidden="true">theater_comedy</span>
+                  デモモードでログイン
                 </button>
               )}
               <Link href="/login">ログイン</Link>

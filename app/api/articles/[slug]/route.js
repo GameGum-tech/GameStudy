@@ -94,7 +94,7 @@ export async function GET(request, { params }) {
 export async function PUT(request, { params }) {
   const resolvedParams = await params;
   
-  console.log('📝 PUT /api/articles/[slug] called:', resolvedParams.slug);
+  console.log('[NOTE] PUT /api/articles/[slug] called:', resolvedParams.slug);
 
   try {
     const body = await request.json();
@@ -129,7 +129,7 @@ export async function PUT(request, { params }) {
       }
 
       const article = articleCheck.rows[0];
-      console.log('📊 Article author_id:', article.author_id, 'auth_uid:', article.auth_uid);
+      console.log('[STAT] Article author_id:', article.author_id, 'auth_uid:', article.auth_uid);
 
       // authorIdがUUIDの場合とINTEGERの場合で権限チェック
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -138,15 +138,15 @@ export async function PUT(request, { params }) {
       if (uuidRegex.test(authorId)) {
         // UUIDの場合: auth_uidと比較
         isAuthor = article.auth_uid === authorId;
-        console.log('🔍 Checking UUID authorization:', { provided: authorId, expected: article.auth_uid, match: isAuthor });
+        console.log('[SEARCH] Checking UUID authorization:', { provided: authorId, expected: article.auth_uid, match: isAuthor });
       } else {
         // INTEGERの場合: author_idと比較
         isAuthor = article.author_id === parseInt(authorId, 10);
-        console.log('🔍 Checking INTEGER authorization:', { provided: authorId, expected: article.author_id, match: isAuthor });
+        console.log('[SEARCH] Checking INTEGER authorization:', { provided: authorId, expected: article.author_id, match: isAuthor });
       }
 
       if (!isAuthor) {
-        console.error('❌ Unauthorized: User is not the author');
+        console.error('[ERR] Unauthorized: User is not the author');
         return Response.json(
           { error: "この記事を編集する権限がありません" },
           { status: 403 }
@@ -165,7 +165,7 @@ export async function PUT(request, { params }) {
          WHERE slug = $7
          RETURNING *`;
         updateParams = [title, content, excerpt, thumbnailUrl, articleStatus, articleStatus === 'published', resolvedParams.slug];
-        console.log('📝 Updating article with status:', articleStatus);
+        console.log('[NOTE] Updating article with status:', articleStatus);
       } else {
         // statusが指定されていない場合（既存の動作を維持）
         updateQuery = `UPDATE articles 
@@ -180,7 +180,7 @@ export async function PUT(request, { params }) {
 
       // タグを更新
       if (tags !== undefined) {
-        console.log('📌 Updating tags:', tags);
+        console.log('[TAG] Updating tags:', tags);
         
         // 既存のタグを削除
         await client.query(
@@ -199,7 +199,7 @@ export async function PUT(request, { params }) {
             );
           }
         }
-        console.log('✅ Tags updated successfully');
+        console.log('[OK] Tags updated successfully');
       }
 
       const finalStatus = articleStatus !== undefined ? articleStatus : (updatedArticle.status || article.status);
@@ -214,13 +214,13 @@ export async function PUT(request, { params }) {
         });
       }
 
-      console.log('✅ Article updated successfully');
+      console.log('[OK] Article updated successfully');
       return Response.json({ article: updatedArticle, imageCleanup });
     } finally {
       client.release();
     }
   } catch (error) {
-    console.error("❌ 記事更新エラー:", error);
+    console.error("[ERR] 記事更新エラー:", error);
     return Response.json({ error: "記事の更新に失敗しました" }, { status: 500 });
   }
 }

@@ -43,7 +43,7 @@ export async function GET(request) {
       { status: 200 }
     );
   } catch (error) {
-    console.error('❌ Error fetching user:', error);
+    console.error('[ERR] Error fetching user:', error);
     return Response.json(
       { 
         error: "Failed to fetch user",
@@ -64,7 +64,7 @@ export async function POST(request) {
     const body = await request.json();
     const { auth_uid, email, username, display_name, avatar_url } = body;
 
-    console.log('👤 Creating user:', { auth_uid, email, username });
+    console.log('[USER] Creating user:', { auth_uid, email, username });
 
     if (!auth_uid || !email) {
       return Response.json(
@@ -80,7 +80,7 @@ export async function POST(request) {
     );
 
     if (existingUser.rows.length > 0) {
-      console.log('✅ User already exists:', existingUser.rows[0]);
+      console.log('[OK] User already exists:', existingUser.rows[0]);
       return Response.json(
         { 
           message: "User already exists",
@@ -100,7 +100,7 @@ export async function POST(request) {
     if (usernameCheck.rows.length > 0) {
       // 重複している場合はタイムスタンプを追加
       finalUsername = `${finalUsername}_${Date.now()}`;
-      console.log('⚠️ Username conflict, using:', finalUsername);
+      console.log('[WARN] Username conflict, using:', finalUsername);
     }
 
     // 新しいユーザーを作成
@@ -117,7 +117,7 @@ export async function POST(request) {
       ]
     );
 
-    console.log('✅ User created successfully:', result.rows[0]);
+    console.log('[OK] User created successfully:', result.rows[0]);
 
     return Response.json(
       {
@@ -127,7 +127,7 @@ export async function POST(request) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('❌ Error creating user:', error);
+    console.error('[ERR] Error creating user:', error);
     return Response.json(
       { 
         error: "Failed to create user",
